@@ -1,0 +1,179 @@
+<resources>
+    <string name="app_name">TDJ HisabMate</string>
+    <string name="tagline">Your Smart Personal Finance Mate</string>
+    <string name="developer_brand">The Digital Junction</string>
+    <string name="developer_brand_full">Developed by The Digital Junction</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_transactions">Transactions</string>
+    <string name="nav_add">Add</string>
+    <string name="nav_guard">Hisab Guard</string>
+    <string name="nav_more">More</string>
+    <string name="nav_accounts">Accounts</string>
+    <string name="nav_budgets">Budgets</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_recurring">Recurring</string>
+    <string name="nav_goals">Goals</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Dashboard & Totals -->
+    <string name="total_balance">Total Balance</string>
+    <string name="income">Income</string>
+    <string name="expense">Expense</string>
+    <string name="transfer">Transfer</string>
+    <string name="net_savings">Net Savings</string>
+    <string name="today_spending">Today\'s Spending</string>
+    <string name="month_spending">This Month</string>
+    <string name="remaining_budget">Remaining Budget</string>
+    <string name="recent_transactions">Recent Transactions</string>
+    <string name="view_all">View All</string>
+    <string name="quick_add">Quick Add</string>
+
+    <!-- Hisab Guard -->
+    <string name="hisab_guard_title">Hisab Guard</string>
+    <string name="hisab_guard_subtitle">Smart Forgotten-Expense Prevention</string>
+    <string name="hisab_guard_question">Have you recorded all of today\'s expenses?</string>
+    <string name="guard_status_complete">Today\'s Hisab Closed</string>
+    <string name="guard_status_pending">Today Needs Review</string>
+    <string name="guard_btn_complete">Yes, Hisab is Complete</string>
+    <string name="guard_btn_review">Review Today\'s Transactions</string>
+    <string name="guard_btn_add">Add Expense</string>
+    <string name="guard_btn_remind_later">Remind Me Later</string>
+    <string name="guard_btn_no_expenses">I had no expenses today</string>
+    <string name="guard_cash_prompt">Did you make any small cash payments or street vendor purchases today?</string>
+    <string name="guard_transport_prompt">Did you take any cab, auto, metro, bus, or fuel today?</string>
+    <string name="guard_food_prompt">Did you grab tea, coffee, snacks, or takeout today?</string>
+    <string name="guard_pattern_prompt">You usually record %1$s on %2$s. Did you spend anything on it today?</string>
+    <string name="guard_reopen_prompt">Reopen Day Review</string>
+
+    <!-- Onboarding & Setup -->
+    <string name="onboarding_welcome">Welcome to TDJ HisabMate</string>
+    <string name="onboarding_tagline">Your Smart Personal Finance Mate</string>
+    <string name="onboarding_p1_title">100% Free &amp; Offline-First</string>
+    <string name="onboarding_p1_desc">Your financial records are stored securely on your device. No login, no cloud dependency, no fees.</string>
+    <string name="onboarding_p2_title">Meet Hisab Guard</string>
+    <string name="onboarding_p2_desc">Never miss tiny cash, chai, or auto expenses. Hisab Guard gently prompts you at the end of the day.</string>
+    <string name="onboarding_p3_title">Master Your Wealth</string>
+    <string name="onboarding_p3_desc">Multi-wallet tracking, category budgets, savings goals, and deep reports at your fingertips.</string>
+    <string name="btn_get_started">Get Started</string>
+    <string name="btn_skip">Skip</string>
+    <string name="initial_setup_title">Quick Initial Setup</string>
+    <string name="select_currency">Currency</string>
+    <string name="initial_account_name">Primary Account</string>
+    <string name="opening_balance">Opening Balance</string>
+    <string name="daily_review_time">Daily Hisab Guard Reminder</string>
+    <string name="finish_setup">Start Managing Finances</string>
+
+    <!-- Transactions -->
+    <string name="add_transaction">Add Transaction</string>
+    <string name="edit_transaction">Edit Transaction</string>
+    <string name="amount">Amount</string>
+    <string name="category">Category</string>
+    <string name="account">Account</string>
+    <string name="from_account">From Account</string>
+    <string name="to_account">To Account</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
+    <string name="notes">Notes / Memo</string>
+    <string name="merchant">Merchant / Payee</string>
+    <string name="tags">Tags (comma separated)</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="duplicate">Duplicate</string>
+    <string name="delete_confirm_title">Delete Transaction?</string>
+    <string name="delete_confirm_msg">This will permanently remove this record and update your account balances.</string>
+
+    <!-- Search & Filters -->
+    <string name="search_hint">Search note, merchant, category, amount...</string>
+    <string name="all">All</string>
+    <string name="filter_by_type">Type</string>
+    <string name="filter_by_category">Category</string>
+    <string name="filter_by_account">Account</string>
+    <string name="filter_by_date">Date Range</string>
+    <string name="clear_filters">Clear Filters</string>
+    <string name="no_transactions_found">No transactions found</string>
+
+    <!-- Accounts -->
+    <string name="accounts_title">Accounts &amp; Wallets</string>
+    <string name="add_account">Add Account</string>
+    <string name="account_name">Account Name</string>
+    <string name="account_type">Account Type</string>
+    <string name="current_balance">Current Balance</string>
+
+    <!-- Budgets -->
+    <string name="budgets_title">Budgets</string>
+    <string name="create_budget">Create Budget</string>
+    <string name="monthly_budget">Monthly Budget</string>
+    <string name="budget_limit">Budget Limit</string>
+    <string name="spent">Spent</string>
+    <string name="remaining">Remaining</string>
+    <string name="over_budget">Over Budget</string>
+    <string name="warning_threshold">Warning Threshold (%)</string>
+
+    <!-- Savings Goals -->
+    <string name="savings_goals_title">Savings Goals</string>
+    <string name="create_goal">Create Savings Goal</string>
+    <string name="goal_name">Goal Name</string>
+    <string name="target_amount">Target Amount</string>
+    <string name="saved_amount">Saved Amount</string>
+    <string name="target_date">Target Date</string>
+
+    <!-- Recurring -->
+    <string name="recurring_title">Recurring Transactions</string>
+    <string name="add_recurring">Add Recurring</string>
+    <string name="frequency">Frequency</string>
+    <string name="freq_daily">Daily</string>
+    <string name="freq_weekly">Weekly</string>
+    <string name="freq_monthly">Monthly</string>
+    <string name="freq_yearly">Yearly</string>
+    <string name="next_due">Next Due</string>
+    <string name="process_now">Record Due Instance</string>
+
+    <!-- Reports -->
+    <string name="reports_title">Financial Reports</string>
+    <string name="period_this_week">This Week</string>
+    <string name="period_this_month">This Month</string>
+    <string name="period_this_year">This Year</string>
+    <string name="period_all_time">All Time</string>
+    <string name="category_breakdown">Spending by Category</string>
+    <string name="payment_method_breakdown">Payment Methods</string>
+    <string name="account_breakdown">Account Balances</string>
+    <string name="income_vs_expense">Income vs Expense</string>
+
+    <!-- Backup & Restore & Export -->
+    <string name="backup_restore_title">Backup &amp; Data Portability</string>
+    <string name="export_json_backup">Export Full Backup (JSON)</string>
+    <string name="restore_json_backup">Restore Backup (JSON)</string>
+    <string name="export_csv">Export Transactions (CSV)</string>
+    <string name="restore_warning">Restoring a backup will replace or merge data. Please verify your backup file.</string>
+    <string name="backup_success">Backup copied to clipboard or saved successfully.</string>
+    <string name="restore_success">Data restored successfully.</string>
+    <string name="export_success">CSV exported successfully.</string>
+
+    <!-- Security -->
+    <string name="security_title">App Security</string>
+    <string name="pin_lock">PIN Protection</string>
+    <string name="set_pin">Set 4-Digit PIN</string>
+    <string name="enter_pin">Enter PIN to Unlock</string>
+    <string name="incorrect_pin">Incorrect PIN. Please try again.</string>
+    <string name="pin_set_success">PIN protection updated.</string>
+
+    <!-- Feedback & Support -->
+    <string name="feedback_title">Feedback &amp; Support</string>
+    <string name="feedback_rating_question">How is TDJ HisabMate working for you?</string>
+    <string name="feedback_category">Category</string>
+    <string name="feedback_text_hint">Share your thoughts, suggestions, or issues...</string>
+    <string name="feedback_contact_hint">Email or Phone (optional)</string>
+    <string name="submit_feedback">Submit Feedback</string>
+    <string name="feedback_thanks">Thank you for your feedback! It helps improve TDJ HisabMate.</string>
+    <string name="feature_request_title">What should we build next?</string>
+    <string name="feature_request_hint">Suggest a new feature, report, or automation...</string>
+
+    <!-- Privacy & About -->
+    <string name="privacy_title">Privacy &amp; Local-First Policy</string>
+    <string name="about_title">About TDJ HisabMate</string>
+    <string name="app_version">Version 1.0.0</string>
+</resources>

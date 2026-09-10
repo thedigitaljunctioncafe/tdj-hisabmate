@@ -1,0 +1,6 @@
+{
+  "name": "TDJ HisabMate",
+  "description": "Your Smart Personal Finance Mate by The Digital Junction. Offline-first expense tracker, multi-wallet management, budgets, and intelligent Hisab Guard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Shield Outline & Background Glow -->
+    <path
+        android:pathData="M54,24 L78,34 C78,56 67,72 54,84 C41,72 30,56 30,34 Z"
+        android:fillColor="#15FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeColor="#69F0AE" />
+
+    <!-- Rupee Finance Symbol centered inside 66dp safe zone -->
+    <path
+        android:pathData="M44,38 L64,38"
+        android:strokeWidth="3.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M44,45 L62,45"
+        android:strokeWidth="3.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M51,38 L51,68"
+        android:strokeWidth="3.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M51,45 C60,45 60,57 51,57 L47,57 L62,72"
+        android:strokeWidth="3.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Hisab Guard Checkmark Badge at top right of shield -->
+    <path
+        android:pathData="M68,30 L74,36 L86,22"
+        android:strokeWidth="3.5"
+        android:strokeColor="#00E676"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
+
