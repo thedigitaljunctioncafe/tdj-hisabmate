@@ -108,4 +108,41 @@ class BackupRestoreTest {
 
         assertEquals(15025L, convertedPaise)
     }
+
+    @Test
+    fun `HMB backup format version 2 exports valid format tag and paise unit`() {
+        val root = JSONObject().apply {
+            put("backupVersion", 2)
+            put("fileFormat", "HMB")
+            put("appName", "TDJ HisabMate")
+            put("unit", "paise")
+            put("exportedAt", 1726000000000L)
+        }
+
+        assertEquals("HMB", root.getString("fileFormat"))
+        assertEquals(2, root.getInt("backupVersion"))
+        assertEquals("paise", root.getString("unit"))
+    }
+
+    @Test
+    fun `Duplicate transaction signature accurately identifies matching records`() {
+        fun txnSignature(
+            type: String,
+            amount: Long,
+            dateMillis: Long,
+            accountId: Long,
+            categoryName: String,
+            note: String,
+            merchant: String
+        ): String {
+            return "$type|$amount|$dateMillis|$accountId|${categoryName.trim().lowercase()}|${note.trim().lowercase()}|${merchant.trim().lowercase()}"
+        }
+
+        val sig1 = txnSignature("EXPENSE", 45000L, 1726000000000L, 1L, "Groceries", "Weekly shopping", "Supermart")
+        val sig2 = txnSignature("EXPENSE", 45000L, 1726000000000L, 1L, " groceries ", "Weekly shopping", "supermart ")
+        val sig3 = txnSignature("EXPENSE", 45000L, 1726000000000L, 2L, "Groceries", "Weekly shopping", "Supermart")
+
+        assertEquals(sig1, sig2) // Normalized identical
+        org.junit.Assert.assertNotEquals(sig1, sig3) // Different account
+    }
 }

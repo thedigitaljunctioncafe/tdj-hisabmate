@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -73,6 +74,7 @@ fun RecurringScreen(
     val categories by viewModel.allCategories.collectAsStateWithLifecycle()
 
     var showAddDialog by remember { mutableStateOf(false) }
+    var itemToEdit by remember { mutableStateOf<RecurringTransactionEntity?>(null) }
     var itemToDelete by remember { mutableStateOf<RecurringTransactionEntity?>(null) }
 
     Scaffold(
@@ -141,6 +143,7 @@ fun RecurringScreen(
                         item = item,
                         currency = preferences.currency,
                         onRecordNow = { viewModel.processRecurringInstance(item) },
+                        onEdit = { itemToEdit = item },
                         onDelete = { itemToDelete = item }
                     )
                 }
@@ -149,14 +152,47 @@ fun RecurringScreen(
     }
 
     if (showAddDialog) {
-        AddRecurringDialog(
+        AddEditRecurringDialog(
+            titleDialog = "Add Recurring Bill / Income",
+            confirmButtonText = "Save Recurring",
             currency = preferences.currency,
             accounts = accounts,
             categories = categories,
+            initialRecurring = null,
             onDismiss = { showAddDialog = false },
             onConfirm = { title, type, amountPaise, catId, catName, accId, accName, freq, dueMillis, method, note ->
                 viewModel.addRecurring(title, type, amountPaise, catId, catName, accId, accName, freq, dueMillis, method, note)
                 showAddDialog = false
+            }
+        )
+    }
+
+    itemToEdit?.let { rec ->
+        AddEditRecurringDialog(
+            titleDialog = "Edit Recurring Bill / Income",
+            confirmButtonText = "Update Recurring",
+            currency = preferences.currency,
+            accounts = accounts,
+            categories = categories,
+            initialRecurring = rec,
+            onDismiss = { itemToEdit = null },
+            onConfirm = { title, type, amountPaise, catId, catName, accId, accName, freq, dueMillis, method, note ->
+                viewModel.updateRecurring(
+                    rec.copy(
+                        title = title,
+                        type = type,
+                        amount = amountPaise,
+                        categoryId = catId,
+                        categoryName = catName,
+                        accountId = accId,
+                        accountName = accName,
+                        frequency = freq,
+                        nextDueDateMillis = dueMillis,
+                        paymentMethod = method,
+                        note = note
+                    )
+                )
+                itemToEdit = null
             }
         )
     }
@@ -190,6 +226,7 @@ fun RecurringItemCard(
     item: RecurringTransactionEntity,
     currency: String,
     onRecordNow: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
@@ -240,7 +277,7 @@ fun RecurringItemCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(
                         onClick = onRecordNow,
                         shape = RoundedCornerShape(8.dp)
@@ -248,6 +285,10 @@ fun RecurringItemCard(
                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Record Due Now", style = MaterialTheme.typography.labelSmall)
+                    }
+
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = "Edit", tint = MaterialTheme.colorScheme.primary)
                     }
 
                     IconButton(onClick = onDelete) {
@@ -260,10 +301,13 @@ fun RecurringItemCard(
 }
 
 @Composable
-fun AddRecurringDialog(
+fun AddEditRecurringDialog(
+    titleDialog: String,
+    confirmButtonText: String,
     currency: String,
     accounts: List<AccountEntity>,
     categories: List<CategoryEntity>,
+    initialRecurring: RecurringTransactionEntity? = null,
     onDismiss: () -> Unit,
     onConfirm: (
         title: String,
@@ -280,19 +324,33 @@ fun AddRecurringDialog(
     ) -> Unit
 ) {
     val context = LocalContext.current
-    var title by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf(TransactionType.EXPENSE.name) }
-    var amountText by remember { mutableStateOf("") }
-    var frequency by remember { mutableStateOf(RecurrenceFrequency.MONTHLY.name) }
-    var dueMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    var selectedAccId by remember { mutableLongStateOf(accounts.firstOrNull()?.id ?: 0L) }
-    var selectedCatId by remember { mutableStateOf<Long?>(categories.firstOrNull()?.id) }
+    var title by remember { mutableStateOf(initialRecurring?.title ?: "") }
+    var type by remember { mutableStateOf(initialRecurring?.type ?: TransactionType.EXPENSE.name) }
+    var amountText by remember {
+        mutableStateOf(
+            if (initialRecurring != null) {
+                String.format(java.util.Locale.ENGLISH, "%.2f", MoneyUtils.paiseToRupees(initialRecurring.amount))
+            } else ""
+        )
+    }
+    var frequency by remember { mutableStateOf(initialRecurring?.frequency ?: RecurrenceFrequency.MONTHLY.name) }
+    var dueMillis by remember { mutableLongStateOf(initialRecurring?.nextDueDateMillis ?: System.currentTimeMillis()) }
+    var selectedAccId by remember {
+        mutableLongStateOf(
+            initialRecurring?.accountId ?: (accounts.firstOrNull()?.id ?: 0L)
+        )
+    }
+    var selectedCatId by remember {
+        mutableStateOf(
+            initialRecurring?.categoryId ?: categories.firstOrNull()?.id
+        )
+    }
 
-    val calendar = remember { Calendar.getInstance() }
+    val calendar = remember { Calendar.getInstance().apply { timeInMillis = dueMillis } }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add Recurring Bill / Income") },
+        title = { Text(titleDialog) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -369,15 +427,15 @@ fun AddRecurringDialog(
                             acc.name,
                             frequency,
                             dueMillis,
-                            "UPI",
-                            ""
+                            initialRecurring?.paymentMethod ?: "UPI",
+                            initialRecurring?.note ?: ""
                         )
                     }
                 },
                 enabled = title.isNotBlank() && MoneyUtils.parseRupeesToPaise(amountText) > 0L,
                 modifier = Modifier.testTag("confirm_add_recurring_btn")
             ) {
-                Text("Save Recurring")
+                Text(confirmButtonText)
             }
         },
         dismissButton = {

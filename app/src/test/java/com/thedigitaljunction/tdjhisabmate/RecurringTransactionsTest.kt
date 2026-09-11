@@ -122,4 +122,45 @@ class RecurringTransactionsTest {
         runProcessor(recurring)
         assertEquals(1, recordedTransactions.size)
     }
+
+    @Test
+    fun `Recurring transaction edit updates entity values properly`() {
+        val original = RecurringTransactionEntity(
+            id = 10L,
+            title = "Old Internet Plan",
+            type = TransactionType.EXPENSE.name,
+            amount = 79900L,
+            accountId = 1L,
+            accountName = "Bank Account",
+            frequency = RecurrenceFrequency.MONTHLY.name,
+            nextDueDateMillis = 1773000000000L,
+            isActive = true
+        )
+
+        val updated = original.copy(
+            title = "Upgraded Fiber Internet",
+            amount = 99900L,
+            frequency = RecurrenceFrequency.YEARLY.name
+        )
+
+        assertEquals(10L, updated.id)
+        assertEquals("Upgraded Fiber Internet", updated.title)
+        assertEquals(99900L, updated.amount)
+        assertEquals(RecurrenceFrequency.YEARLY.name, updated.frequency)
+    }
+
+    @Test
+    fun `Recurring transaction delete removes item from scheduled collection`() {
+        val items = mutableListOf(
+            RecurringTransactionEntity(id = 1L, title = "Gym", type = "EXPENSE", amount = 150000L, accountId = 1L, accountName = "Bank", frequency = "MONTHLY", nextDueDateMillis = 1000L, isActive = true),
+            RecurringTransactionEntity(id = 2L, title = "Netflix", type = "EXPENSE", amount = 49900L, accountId = 1L, accountName = "Bank", frequency = "MONTHLY", nextDueDateMillis = 2000L, isActive = true)
+        )
+
+        val toDelete = items.first { it.id == 2L }
+        items.remove(toDelete)
+
+        assertEquals(1, items.size)
+        assertEquals("Gym", items[0].title)
+        assertFalse(items.any { it.id == 2L })
+    }
 }

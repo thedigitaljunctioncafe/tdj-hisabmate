@@ -5,6 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -47,8 +49,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun BackupRestoreScreen(
@@ -58,9 +65,115 @@ fun BackupRestoreScreen(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    var showRestoreDialog by remember { mutableStateOf(false) }
+    var showPasteRestoreDialog by remember { mutableStateOf(false) }
     var restoreJsonText by remember { mutableStateOf("") }
-    var statusMessage by remember { mutableStateOf<String?>(null) }
+    var isRestoring by remember { mutableStateOf(false) }
+    var pendingHmbContent by remember { mutableStateOf<String?>(null) }
+    var pendingCsvContent by remember { mutableStateOf<String?>(null) }
+
+    // Native file save for .hmb backup
+    val saveHmbLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/octet-stream")
+    ) { uri ->
+        viewModel.isExternalPickerActive = false
+        if (uri != null && pendingHmbContent != null) {
+            coroutineScope.launch {
+                try {
+                    context.contentResolver.openOutputStream(uri)?.use { os ->
+                        os.write(pendingHmbContent!!.toByteArray(Charsets.UTF_8))
+                    }
+                    Toast.makeText(context, "Backup file saved successfully (.hmb)", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error saving backup file: ${e.message}", Toast.LENGTH_LONG).show()
+                } finally {
+                    pendingHmbContent = null
+                }
+            }
+        } else {
+            pendingHmbContent = null
+        }
+    }
+
+    // Native file open for .hmb restore
+    val openHmbLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        viewModel.isExternalPickerActive = false
+        if (uri != null) {
+            coroutineScope.launch {
+                try {
+                    isRestoring = true
+                    val content = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    if (!content.isNullOrBlank()) {
+                        val res = viewModel.restoreHmbBackup(content)
+                        if (res.isSuccess) {
+                            Toast.makeText(context, res.getOrNull() ?: "Restored successfully!", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, "Restore failed: ${res.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "Selected backup file was empty", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Failed to read backup file: ${e.message}", Toast.LENGTH_LONG).show()
+                } finally {
+                    isRestoring = false
+                }
+            }
+        }
+    }
+
+    // Native file save for CSV spreadsheet
+    val saveCsvLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("text/csv")
+    ) { uri ->
+        viewModel.isExternalPickerActive = false
+        if (uri != null && pendingCsvContent != null) {
+            coroutineScope.launch {
+                try {
+                    context.contentResolver.openOutputStream(uri)?.use { os ->
+                        os.write(pendingCsvContent!!.toByteArray(Charsets.UTF_8))
+                    }
+                    Toast.makeText(context, "Spreadsheet saved successfully (.csv)", Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Error saving spreadsheet: ${e.message}", Toast.LENGTH_LONG).show()
+                } finally {
+                    pendingCsvContent = null
+                }
+            }
+        } else {
+            pendingCsvContent = null
+        }
+    }
+
+    fun shareHmbBackupFile() {
+        coroutineScope.launch {
+            try {
+                val backupJson = viewModel.exportHmbBackup()
+                val backupDir = File(context.cacheDir, "backups").apply { mkdirs() }
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ENGLISH).format(Date())
+                val file = File(backupDir, "tdj_hisabmate_backup_$timestamp.hmb")
+                file.writeText(backupJson, Charsets.UTF_8)
+
+                val fileUri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                )
+                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                    putExtra(Intent.EXTRA_STREAM, fileUri)
+                    type = "application/octet-stream"
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                viewModel.isExternalPickerActive = true
+                val chooser = Intent.createChooser(sendIntent, "Share TDJ HisabMate Backup (.hmb)")
+                context.startActivity(chooser)
+            } catch (e: Exception) {
+                viewModel.isExternalPickerActive = false
+                Toast.makeText(context, "Error sharing backup: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     LazyColumn(
         modifier = modifier
@@ -96,7 +209,7 @@ fun BackupRestoreScreen(
                     Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "TDJ HisabMate never uploads your data to any cloud or remote server. All exports are generated locally for your complete privacy.",
+                        text = "TDJ HisabMate never uploads your data to any cloud or remote server. All backups are generated locally using the native .hmb format for complete privacy.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -104,7 +217,7 @@ fun BackupRestoreScreen(
             }
         }
 
-        // Export JSON Backup Card
+        // Native .hmb Backup Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -116,56 +229,71 @@ fun BackupRestoreScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Export Full Backup (JSON)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Export Backup (.hmb File)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Creates a complete snapshot of all accounts, transactions, budgets, recurring items, savings goals, and daily hisab reviews.",
+                        text = "Creates a versioned HisabMate Backup (.hmb) file containing all accounts, transactions, recurring rules, budgets, and savings goals.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Button(
                             onClick = {
                                 coroutineScope.launch {
-                                    val json = viewModel.exportJsonBackup()
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("TDJ HisabMate Backup", json))
-                                    Toast.makeText(context, "Full Backup copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    val content = viewModel.exportHmbBackup()
+                                    pendingHmbContent = content
+                                    viewModel.isExternalPickerActive = true
+                                    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ENGLISH).format(Date())
+                                    saveHmbLauncher.launch("tdj_hisabmate_backup_$timestamp.hmb")
                                 }
                             },
-                            modifier = Modifier.testTag("export_json_copy_btn")
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("save_backup_file_btn")
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy Backup")
+                            Text("Save .hmb")
                         }
 
                         OutlinedButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    val json = viewModel.exportJsonBackup()
-                                    val sendIntent = Intent().apply {
-                                        action = Intent.ACTION_SEND
-                                        putExtra(Intent.EXTRA_TEXT, json)
-                                        type = "text/plain"
-                                    }
-                                    val shareIntent = Intent.createChooser(sendIntent, "Share TDJ HisabMate Backup")
-                                    context.startActivity(shareIntent)
-                                }
-                            }
+                            onClick = { shareHmbBackupFile() },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("share_backup_file_btn")
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Share")
+                            Text("Share .hmb")
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                val json = viewModel.exportJsonBackup()
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("TDJ HisabMate Backup", json))
+                                Toast.makeText(context, "Backup copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("export_json_copy_btn")
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Copy Raw Text")
                     }
                 }
             }
         }
 
-        // Restore JSON Backup Card
+        // Restore Native .hmb Backup Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -177,20 +305,39 @@ fun BackupRestoreScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.CloudDownload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Restore from Backup", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Restore from Backup (.hmb File)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Paste a previously exported TDJ HisabMate backup to restore your data safely.",
+                        text = "Select a .hmb file to restore your financial records. Existing data is preserved, and duplicate transactions are safely skipped.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Button(
-                        onClick = { showRestoreDialog = true },
-                        modifier = Modifier.testTag("open_restore_dialog_btn")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Restore Backup JSON")
+                        Button(
+                            onClick = {
+                                viewModel.isExternalPickerActive = true
+                                openHmbLauncher.launch(arrayOf("*/*", "application/octet-stream", "application/json"))
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("open_backup_file_btn")
+                        ) {
+                            Text("Open .hmb File")
+                        }
+
+                        OutlinedButton(
+                            onClick = { showPasteRestoreDialog = true },
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("open_restore_dialog_btn")
+                        ) {
+                            Text("Paste Text")
+                        }
                     }
                 }
             }
@@ -217,20 +364,23 @@ fun BackupRestoreScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Button(
                             onClick = {
                                 coroutineScope.launch {
                                     val csv = viewModel.exportCsv()
-                                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                                    clipboard.setPrimaryClip(ClipData.newPlainText("TDJ HisabMate CSV", csv))
-                                    Toast.makeText(context, "CSV copied to clipboard!", Toast.LENGTH_SHORT).show()
+                                    pendingCsvContent = csv
+                                    viewModel.isExternalPickerActive = true
+                                    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.ENGLISH).format(Date())
+                                    saveCsvLauncher.launch("tdj_hisabmate_transactions_$timestamp.csv")
                                 }
-                            }
+                            },
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy CSV")
+                            Text("Save CSV")
                         }
 
                         OutlinedButton(
@@ -242,35 +392,54 @@ fun BackupRestoreScreen(
                                         putExtra(Intent.EXTRA_TEXT, csv)
                                         type = "text/csv"
                                     }
+                                    viewModel.isExternalPickerActive = true
                                     val shareIntent = Intent.createChooser(sendIntent, "Share TDJ HisabMate CSV")
                                     context.startActivity(shareIntent)
                                 }
-                            }
+                            },
+                            modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Share CSV")
+                            Text("Share")
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                val csv = viewModel.exportCsv()
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText("TDJ HisabMate CSV", csv))
+                                Toast.makeText(context, "CSV copied to clipboard!", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Copy CSV")
                     }
                 }
             }
         }
     }
 
-    if (showRestoreDialog) {
+    if (showPasteRestoreDialog) {
         AlertDialog(
-            onDismissRequest = { showRestoreDialog = false },
-            title = { Text("Paste Backup JSON") },
+            onDismissRequest = { showPasteRestoreDialog = false },
+            title = { Text("Paste Backup JSON / .hmb") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Paste the full JSON text from a previous TDJ HisabMate backup. Existing transactions will be preserved, and backup records will be imported safely.",
+                        "Paste the full JSON or .hmb text from a previous backup. Existing records will be preserved, and duplicate transactions will be skipped automatically.",
                         style = MaterialTheme.typography.bodySmall
                     )
                     OutlinedTextField(
                         value = restoreJsonText,
                         onValueChange = { restoreJsonText = it },
-                        placeholder = { Text("{\"version\":1, \"accounts\":[...]}") },
+                        placeholder = { Text("{\"backupVersion\":2, \"accounts\":[...]}") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp)
@@ -282,10 +451,10 @@ fun BackupRestoreScreen(
                 Button(
                     onClick = {
                         coroutineScope.launch {
-                            val res = viewModel.restoreJsonBackup(restoreJsonText)
+                            val res = viewModel.restoreHmbBackup(restoreJsonText)
                             if (res.isSuccess) {
                                 Toast.makeText(context, res.getOrNull() ?: "Restored successfully!", Toast.LENGTH_LONG).show()
-                                showRestoreDialog = false
+                                showPasteRestoreDialog = false
                             } else {
                                 Toast.makeText(context, "Restore failed: ${res.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
                             }
@@ -298,7 +467,7 @@ fun BackupRestoreScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showRestoreDialog = false }) {
+                TextButton(onClick = { showPasteRestoreDialog = false }) {
                     Text("Cancel")
                 }
             }

@@ -32,4 +32,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        if (!viewModel.isExternalPickerActive) {
+            viewModel.lockSession()
+        }
+    }
 }

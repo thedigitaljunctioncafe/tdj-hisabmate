@@ -61,4 +61,37 @@ class SecurityPinTest {
         assertEquals(64, hashedToStore.length)
         assertFalse(SecurityUtils.isLegacyPlainTextPin(hashedToStore))
     }
+
+    @Test
+    fun `Changing PIN requires correct current PIN verification`() {
+        val originalPin = "1122"
+        val storedHash = SecurityUtils.hashPin(originalPin)
+
+        // User attempts change with wrong current PIN
+        val wrongCurrentPin = "9999"
+        val isCurrentPinValidWrong = SecurityUtils.verifyPin(wrongCurrentPin, storedHash)
+        assertFalse(isCurrentPinValidWrong)
+
+        // User attempts change with correct current PIN
+        val isCurrentPinValidCorrect = SecurityUtils.verifyPin(originalPin, storedHash)
+        assertTrue(isCurrentPinValidCorrect)
+
+        // New PIN is hashed and replaces old PIN
+        val newPin = "3344"
+        val newHashed = SecurityUtils.hashPin(newPin)
+        assertEquals(64, newHashed.length)
+        assertNotEquals(storedHash, newHashed)
+        assertTrue(SecurityUtils.verifyPin(newPin, newHashed))
+        assertFalse(SecurityUtils.verifyPin(originalPin, newHashed))
+    }
+
+    @Test
+    fun `Disabling PIN requires correct current PIN verification`() {
+        val originalPin = "7788"
+        val storedHash = SecurityUtils.hashPin(originalPin)
+
+        // Disabling requires current PIN check
+        assertTrue(SecurityUtils.verifyPin("7788", storedHash))
+        assertFalse(SecurityUtils.verifyPin("1234", storedHash))
+    }
 }

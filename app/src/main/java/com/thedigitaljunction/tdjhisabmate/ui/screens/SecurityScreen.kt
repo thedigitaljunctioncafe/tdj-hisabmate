@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -22,6 +24,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -40,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 
 @Composable
@@ -51,8 +55,13 @@ fun SecurityScreen(
     val context = LocalContext.current
 
     var showSetPinDialog by remember { mutableStateOf(false) }
+    var showChangePinDialog by remember { mutableStateOf(false) }
+    var showDisablePinDialog by remember { mutableStateOf(false) }
+
+    var currentPinInput by remember { mutableStateOf("") }
     var pinInput by remember { mutableStateOf("") }
     var confirmPinInput by remember { mutableStateOf("") }
+    var currentPinError by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier
@@ -105,8 +114,7 @@ fun SecurityScreen(
                                 if (enable) {
                                     showSetPinDialog = true
                                 } else {
-                                    viewModel.setPin("", false)
-                                    Toast.makeText(context, "PIN protection turned off", Toast.LENGTH_SHORT).show()
+                                    showDisablePinDialog = true
                                 }
                             },
                             modifier = Modifier.testTag("pin_lock_switch")
@@ -115,10 +123,27 @@ fun SecurityScreen(
 
                     if (preferences.isPinEnabled) {
                         Button(
-                            onClick = { showSetPinDialog = true },
+                            onClick = {
+                                currentPinInput = ""
+                                pinInput = ""
+                                confirmPinInput = ""
+                                currentPinError = false
+                                showChangePinDialog = true
+                            },
                             modifier = Modifier.fillMaxWidth()
                         ) {
+                            Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text("Change PIN")
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                viewModel.lockSession()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Lock App Now")
                         }
                     }
                 }
@@ -181,6 +206,162 @@ fun SecurityScreen(
                         showSetPinDialog = false
                         pinInput = ""
                         confirmPinInput = ""
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showChangePinDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showChangePinDialog = false
+                currentPinInput = ""
+                pinInput = ""
+                confirmPinInput = ""
+                currentPinError = false
+            },
+            title = { Text("Change Security PIN") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = currentPinInput,
+                        onValueChange = {
+                            if (it.length <= 4 && it.all { c -> c.isDigit() }) {
+                                currentPinInput = it
+                                currentPinError = false
+                            }
+                        },
+                        label = { Text("Current 4-Digit PIN") },
+                        isError = currentPinError,
+                        supportingText = if (currentPinError) { { Text("Current PIN is incorrect") } } else null,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("current_pin_input")
+                    )
+
+                    OutlinedTextField(
+                        value = pinInput,
+                        onValueChange = { if (it.length <= 4 && it.all { c -> c.isDigit() }) pinInput = it },
+                        label = { Text("New 4-Digit PIN") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("new_pin_input")
+                    )
+
+                    OutlinedTextField(
+                        value = confirmPinInput,
+                        onValueChange = { if (it.length <= 4 && it.all { c -> c.isDigit() }) confirmPinInput = it },
+                        label = { Text("Confirm New PIN") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("confirm_new_pin_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (!SecurityUtils.verifyPin(currentPinInput, preferences.pinCode)) {
+                            currentPinError = true
+                            Toast.makeText(context, "Current PIN is incorrect", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+                        if (pinInput.length == 4 && pinInput == confirmPinInput) {
+                            viewModel.setPin(pinInput, true)
+                            showChangePinDialog = false
+                            currentPinInput = ""
+                            pinInput = ""
+                            confirmPinInput = ""
+                            currentPinError = false
+                            Toast.makeText(context, "PIN updated successfully!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "New PINs must match and be 4 digits", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = currentPinInput.length == 4 && pinInput.length == 4 && pinInput == confirmPinInput
+                ) {
+                    Text("Update PIN")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showChangePinDialog = false
+                        currentPinInput = ""
+                        pinInput = ""
+                        confirmPinInput = ""
+                        currentPinError = false
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showDisablePinDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showDisablePinDialog = false
+                currentPinInput = ""
+                currentPinError = false
+            },
+            title = { Text("Disable PIN Protection") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = "Enter your current 4-digit PIN to turn off PIN protection.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(
+                        value = currentPinInput,
+                        onValueChange = {
+                            if (it.length <= 4 && it.all { c -> c.isDigit() }) {
+                                currentPinInput = it
+                                currentPinError = false
+                            }
+                        },
+                        label = { Text("Current 4-Digit PIN") },
+                        isError = currentPinError,
+                        supportingText = if (currentPinError) { { Text("Current PIN is incorrect") } } else null,
+                        visualTransformation = PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().testTag("disable_pin_current_input")
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (SecurityUtils.verifyPin(currentPinInput, preferences.pinCode)) {
+                            viewModel.setPin("", false)
+                            showDisablePinDialog = false
+                            currentPinInput = ""
+                            currentPinError = false
+                            Toast.makeText(context, "PIN protection turned off", Toast.LENGTH_SHORT).show()
+                        } else {
+                            currentPinError = true
+                            Toast.makeText(context, "Current PIN is incorrect", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = currentPinInput.length == 4
+                ) {
+                    Text("Turn Off")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showDisablePinDialog = false
+                        currentPinInput = ""
+                        currentPinError = false
                     }
                 ) {
                     Text("Cancel")

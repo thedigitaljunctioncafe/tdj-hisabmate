@@ -61,6 +61,20 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
     private val _showAutoUpdateDialog = MutableStateFlow(false)
     val showAutoUpdateDialog: StateFlow<Boolean> = _showAutoUpdateDialog.asStateFlow()
 
+    private val _isSessionUnlocked = MutableStateFlow(false)
+    val isSessionUnlocked: StateFlow<Boolean> = _isSessionUnlocked.asStateFlow()
+
+    @Volatile
+    var isExternalPickerActive: Boolean = false
+
+    fun unlockSession() {
+        _isSessionUnlocked.value = true
+    }
+
+    fun lockSession() {
+        _isSessionUnlocked.value = false
+    }
+
     // User preferences
     val preferences: StateFlow<UserPreferences> = preferencesRepository.userPreferencesFlow
         .stateIn(
@@ -441,6 +455,10 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateRecurring(recurring: RecurringTransactionEntity) {
+        viewModelScope.launch { repository.updateRecurring(recurring) }
+    }
+
     fun processRecurringInstance(recurring: RecurringTransactionEntity) {
         viewModelScope.launch {
             repository.processRecurringInstance(recurring)
@@ -500,6 +518,7 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } else ""
             preferencesRepository.setPin(hashed, enabled)
+            _isSessionUnlocked.value = true
         }
     }
 
@@ -548,6 +567,15 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ----------------- BACKUP & RESTORE -----------------
+    suspend fun exportHmbBackup(): String = repository.exportHmbBackup()
+    suspend fun restoreHmbBackup(content: String): Result<String> {
+        val res = repository.restoreHmbBackup(content)
+        if (res.isSuccess) {
+            refreshGuardStatus()
+        }
+        return res
+    }
+
     suspend fun exportJsonBackup(): String = repository.exportJsonBackup()
     suspend fun exportCsv(): String = repository.exportCsv()
     suspend fun restoreJsonBackup(json: String): Result<String> {
