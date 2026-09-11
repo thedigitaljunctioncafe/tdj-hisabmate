@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.AlertDialog
@@ -54,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.thedigitaljunction.tdjhisabmate.data.model.AccountEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.AccountType
 import com.thedigitaljunction.tdjhisabmate.data.repository.AccountWithBalance
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
@@ -135,6 +137,9 @@ fun AccountsScreen(
                 AccountItemCard(
                     item = item,
                     currency = preferences.currency,
+                    onEdit = { updatedAccount ->
+                        viewModel.updateAccount(updatedAccount)
+                    },
                     onDelete = {
                         viewModel.deleteAccount(item.account)
                     }
@@ -159,9 +164,11 @@ fun AccountsScreen(
 fun AccountItemCard(
     item: AccountWithBalance,
     currency: String,
+    onEdit: (AccountEntity) -> Unit,
     onDelete: () -> Unit
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier
@@ -226,6 +233,20 @@ fun AccountItemCard(
                 )
             }
 
+            Spacer(modifier = Modifier.width(4.dp))
+
+            IconButton(
+                onClick = { showEditDialog = true },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Edit Account",
+                    tint = MaterialTheme.colorScheme.outline,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
             IconButton(
                 onClick = { showDeleteConfirm = true },
                 modifier = Modifier.size(36.dp)
@@ -238,6 +259,18 @@ fun AccountItemCard(
                 )
             }
         }
+    }
+
+    if (showEditDialog) {
+        EditAccountDialog(
+            account = item.account,
+            currency = currency,
+            onDismiss = { showEditDialog = false },
+            onConfirm = { updated ->
+                onEdit(updated)
+                showEditDialog = false
+            }
+        )
     }
 
     if (showDeleteConfirm) {
@@ -262,6 +295,76 @@ fun AccountItemCard(
             }
         )
     }
+}
+
+@Composable
+fun EditAccountDialog(
+    account: AccountEntity,
+    currency: String,
+    onDismiss: () -> Unit,
+    onConfirm: (AccountEntity) -> Unit
+) {
+    var name by remember { mutableStateOf(account.name) }
+    var selectedType by remember { mutableStateOf(account.type) }
+    var initialBalanceText by remember {
+        val rup = MoneyUtils.paiseToRupees(account.initialBalance)
+        mutableStateOf(if (rup % 1.0 == 0.0) rup.toLong().toString() else rup.toString())
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Account") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Account Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text("Account Type", style = MaterialTheme.typography.labelMedium)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    val types = listOf(AccountType.BANK.name, AccountType.CASH.name, AccountType.UPI.name, AccountType.CREDIT_CARD.name, AccountType.WALLET.name)
+                    items(types) { t ->
+                        FilterChip(
+                            selected = selectedType == t,
+                            onClick = { selectedType = t },
+                            label = { Text(t) }
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = initialBalanceText,
+                    onValueChange = { initialBalanceText = it },
+                    label = { Text("Opening Balance ($currency)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        val balPaise = MoneyUtils.parseRupeesToPaise(initialBalanceText)
+                        onConfirm(account.copy(name = name.trim(), type = selectedType, initialBalance = balPaise))
+                    }
+                },
+                enabled = name.isNotBlank()
+            ) {
+                Text("Save Changes")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

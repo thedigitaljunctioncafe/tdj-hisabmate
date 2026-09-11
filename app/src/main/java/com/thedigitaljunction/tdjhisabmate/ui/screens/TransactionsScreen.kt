@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SyncAlt
@@ -65,6 +66,7 @@ import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 fun TransactionsScreen(
     viewModel: HisabViewModel,
     onNavigateToAddTransaction: () -> Unit = {},
+    onNavigateToEditTransaction: (Long) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val filteredTxns by viewModel.filteredTransactions.collectAsStateWithLifecycle()
@@ -199,6 +201,7 @@ fun TransactionsScreen(
                             transaction = txn,
                             currency = preferences.currency,
                             onClick = { selectedTxnForDetails = txn },
+                            onEdit = { onNavigateToEditTransaction(txn.id) },
                             onDuplicate = { viewModel.duplicateTransaction(txn) },
                             onDelete = { txnToDelete = txn }
                         )
@@ -253,8 +256,19 @@ fun TransactionsScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { selectedTxnForDetails = null }) {
-                    Text("Close")
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(
+                        onClick = {
+                            val toEdit = selectedTxnForDetails
+                            selectedTxnForDetails = null
+                            if (toEdit != null) onNavigateToEditTransaction(toEdit.id)
+                        }
+                    ) {
+                        Text("Edit")
+                    }
+                    TextButton(onClick = { selectedTxnForDetails = null }) {
+                        Text("Close")
+                    }
                 }
             },
             dismissButton = {
@@ -301,6 +315,7 @@ fun TransactionDetailCard(
     transaction: TransactionEntity,
     currency: String,
     onClick: () -> Unit,
+    onEdit: () -> Unit,
     onDuplicate: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -409,6 +424,14 @@ fun TransactionDetailCard(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false }
                 ) {
+                    DropdownMenuItem(
+                        text = { Text("Edit") },
+                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        onClick = {
+                            showMenu = false
+                            onEdit()
+                        }
+                    )
                     DropdownMenuItem(
                         text = { Text("Duplicate") },
                         leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },

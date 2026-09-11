@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -39,6 +40,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,6 +76,7 @@ fun AddTransactionScreen(
     viewModel: HisabViewModel,
     presetCategory: String? = null,
     presetAmount: Double? = null,
+    editTransactionId: Long? = null,
     onSaved: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier
@@ -82,6 +85,11 @@ fun AddTransactionScreen(
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
     val accounts by viewModel.activeAccounts.collectAsStateWithLifecycle()
     val categories by viewModel.allCategories.collectAsStateWithLifecycle()
+    val allTxns by viewModel.allTransactions.collectAsStateWithLifecycle()
+
+    val existingTxn = remember(allTxns, editTransactionId) {
+        if (editTransactionId != null) allTxns.find { it.id == editTransactionId } else null
+    }
 
     var selectedType by remember { mutableStateOf(TransactionType.EXPENSE.name) }
     var amountText by remember { mutableStateOf(if (presetAmount != null && presetAmount > 0) presetAmount.toInt().toString() else "") }
@@ -96,12 +104,30 @@ fun AddTransactionScreen(
     var selectedCategoryName by remember { mutableStateOf("General") }
 
     var dateMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    var showAddCategoryDialog by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
 
-    // Sync initial account
+    // Initialize fields if editing an existing transaction
+    LaunchedEffect(existingTxn) {
+        existingTxn?.let { txn ->
+            selectedType = txn.type
+            amountText = (MoneyUtils.paiseToRupees(txn.amount)).let { if (it % 1.0 == 0.0) it.toLong().toString() else it.toString() }
+            note = txn.note
+            merchant = txn.merchant
+            tags = txn.tags
+            selectedPaymentMethod = txn.paymentMethod
+            selectedAccountId = txn.accountId
+            selectedToAccountId = txn.toAccountId ?: 0L
+            selectedCategoryId = txn.categoryId
+            selectedCategoryName = txn.categoryName
+            dateMillis = txn.dateMillis
+        }
+    }
+
+    // Sync initial account if not set
     LaunchedEffect(accounts) {
-        if (accounts.isNotEmpty() && selectedAccountId == 0L) {
+        if (accounts.isNotEmpty() && selectedAccountId == 0L && existingTxn == null) {
             selectedAccountId = accounts.first().id
             if (accounts.size > 1) {
                 selectedToAccountId = accounts[1].id
@@ -109,18 +135,20 @@ fun AddTransactionScreen(
         }
     }
 
-    // Sync preset category
+    // Sync preset category if not editing
     LaunchedEffect(categories, presetCategory) {
-        if (presetCategory != null) {
-            val matched = categories.find { it.name.equals(presetCategory, ignoreCase = true) }
-            if (matched != null) {
-                selectedCategoryId = matched.id
-                selectedCategoryName = matched.name
+        if (existingTxn == null) {
+            if (presetCategory != null) {
+                val matched = categories.find { it.name.equals(presetCategory, ignoreCase = true) }
+                if (matched != null) {
+                    selectedCategoryId = matched.id
+                    selectedCategoryName = matched.name
+                }
+            } else if (selectedCategoryId == null && categories.isNotEmpty()) {
+                val defaultCat = categories.find { it.type == selectedType } ?: categories.first()
+                selectedCategoryId = defaultCat.id
+                selectedCategoryName = defaultCat.name
             }
-        } else if (selectedCategoryId == null && categories.isNotEmpty()) {
-            val defaultCat = categories.find { it.type == selectedType } ?: categories.first()
-            selectedCategoryId = defaultCat.id
-            selectedCategoryName = defaultCat.name
         }
     }
 
@@ -148,7 +176,7 @@ fun AddTransactionScreen(
                 Icon(Icons.Default.Close, contentDescription = "Cancel")
             }
             Text(
-                text = "Record Transaction",
+                text = if (existingTxn != null) "Edit Transaction" else "Record Transaction",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -159,21 +187,41 @@ fun AddTransactionScreen(
                         val currentAcc = accounts.find { it.id == selectedAccountId }
                         val toAcc = if (selectedType == TransactionType.TRANSFER.name) accounts.find { it.id == selectedToAccountId } else null
 
-                        viewModel.addTransaction(
-                            type = selectedType,
-                            amount = amtPaise,
-                            categoryId = if (selectedType == TransactionType.TRANSFER.name) null else selectedCategoryId,
-                            categoryName = if (selectedType == TransactionType.TRANSFER.name) "Transfer" else selectedCategoryName,
-                            accountId = selectedAccountId,
-                            accountName = currentAcc?.name ?: "Account",
-                            toAccountId = toAcc?.id,
-                            toAccountName = toAcc?.name,
-                            paymentMethod = selectedPaymentMethod,
-                            note = note,
-                            merchant = merchant,
-                            tags = tags,
-                            dateMillis = dateMillis
-                        )
+                        if (existingTxn != null) {
+                            viewModel.updateTransaction(
+                                existingTxn.copy(
+                                    type = selectedType,
+                                    amount = amtPaise,
+                                    categoryId = if (selectedType == TransactionType.TRANSFER.name) null else selectedCategoryId,
+                                    categoryName = if (selectedType == TransactionType.TRANSFER.name) "Transfer" else selectedCategoryName,
+                                    accountId = selectedAccountId,
+                                    accountName = currentAcc?.name ?: existingTxn.accountName,
+                                    toAccountId = toAcc?.id,
+                                    toAccountName = toAcc?.name,
+                                    paymentMethod = selectedPaymentMethod,
+                                    note = note,
+                                    merchant = merchant,
+                                    tags = tags,
+                                    dateMillis = dateMillis
+                                )
+                            )
+                        } else {
+                            viewModel.addTransaction(
+                                type = selectedType,
+                                amount = amtPaise,
+                                categoryId = if (selectedType == TransactionType.TRANSFER.name) null else selectedCategoryId,
+                                categoryName = if (selectedType == TransactionType.TRANSFER.name) "Transfer" else selectedCategoryName,
+                                accountId = selectedAccountId,
+                                accountName = currentAcc?.name ?: "Account",
+                                toAccountId = toAcc?.id,
+                                toAccountName = toAcc?.name,
+                                paymentMethod = selectedPaymentMethod,
+                                note = note,
+                                merchant = merchant,
+                                tags = tags,
+                                dateMillis = dateMillis
+                            )
+                        }
                         onSaved()
                     }
                 },
@@ -508,21 +556,41 @@ fun AddTransactionScreen(
                     val currentAcc = accounts.find { it.id == selectedAccountId }
                     val toAcc = if (selectedType == TransactionType.TRANSFER.name) accounts.find { it.id == selectedToAccountId } else null
 
-                    viewModel.addTransaction(
-                        type = selectedType,
-                        amount = amtPaise,
-                        categoryId = if (selectedType == TransactionType.TRANSFER.name) null else selectedCategoryId,
-                        categoryName = if (selectedType == TransactionType.TRANSFER.name) "Transfer" else selectedCategoryName,
-                        accountId = selectedAccountId,
-                        accountName = currentAcc?.name ?: "Account",
-                        toAccountId = toAcc?.id,
-                        toAccountName = toAcc?.name,
-                        paymentMethod = selectedPaymentMethod,
-                        note = note,
-                        merchant = merchant,
-                        tags = tags,
-                        dateMillis = dateMillis
-                    )
+                    if (existingTxn != null) {
+                        viewModel.updateTransaction(
+                            existingTxn.copy(
+                                type = selectedType,
+                                amount = amtPaise,
+                                categoryId = if (selectedType == TransactionType.TRANSFER.name) null else selectedCategoryId,
+                                categoryName = if (selectedType == TransactionType.TRANSFER.name) "Transfer" else selectedCategoryName,
+                                accountId = selectedAccountId,
+                                accountName = currentAcc?.name ?: existingTxn.accountName,
+                                toAccountId = toAcc?.id,
+                                toAccountName = toAcc?.name,
+                                paymentMethod = selectedPaymentMethod,
+                                note = note,
+                                merchant = merchant,
+                                tags = tags,
+                                dateMillis = dateMillis
+                            )
+                        )
+                    } else {
+                        viewModel.addTransaction(
+                            type = selectedType,
+                            amount = amtPaise,
+                            categoryId = if (selectedType == TransactionType.TRANSFER.name) null else selectedCategoryId,
+                            categoryName = if (selectedType == TransactionType.TRANSFER.name) "Transfer" else selectedCategoryName,
+                            accountId = selectedAccountId,
+                            accountName = currentAcc?.name ?: "Account",
+                            toAccountId = toAcc?.id,
+                            toAccountName = toAcc?.name,
+                            paymentMethod = selectedPaymentMethod,
+                            note = note,
+                            merchant = merchant,
+                            tags = tags,
+                            dateMillis = dateMillis
+                        )
+                    }
                     onSaved()
                 }
             },
@@ -535,9 +603,50 @@ fun AddTransactionScreen(
         ) {
             Icon(Icons.Default.Done, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Save Transaction", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(if (existingTxn != null) "Update Transaction" else "Save Transaction", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    if (showAddCategoryDialog) {
+        var newCatName by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { showAddCategoryDialog = false },
+            title = { Text("Add Custom Category") },
+            text = {
+                OutlinedTextField(
+                    value = newCatName,
+                    onValueChange = { newCatName = it },
+                    label = { Text("Category Name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (newCatName.isNotBlank()) {
+                            viewModel.addCategory(
+                                name = newCatName.trim(),
+                                type = selectedType,
+                                iconName = "category",
+                                colorHex = 0xFF00695CL
+                            )
+                            selectedCategoryName = newCatName.trim()
+                            showAddCategoryDialog = false
+                        }
+                    },
+                    enabled = newCatName.isNotBlank()
+                ) {
+                    Text("Add")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showAddCategoryDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

@@ -189,7 +189,8 @@ fun MainApp(
             composable(Screen.Transactions.route) {
                 TransactionsScreen(
                     viewModel = viewModel,
-                    onNavigateToAddTransaction = { navController.navigate("add_transaction") }
+                    onNavigateToAddTransaction = { navController.navigate("add_transaction") },
+                    onNavigateToEditTransaction = { txnId -> navController.navigate("add_transaction?editId=$txnId") }
                 )
             }
 
@@ -229,7 +230,7 @@ fun MainApp(
 
             // Add Transaction Screen
             composable(
-                route = "add_transaction?category={category}&amount={amount}",
+                route = "add_transaction?category={category}&amount={amount}&editId={editId}",
                 arguments = listOf(
                     navArgument("category") {
                         type = NavType.StringType
@@ -240,16 +241,23 @@ fun MainApp(
                         type = NavType.StringType
                         nullable = true
                         defaultValue = null
+                    },
+                    navArgument("editId") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
                     }
                 )
             ) { backStackEntry ->
                 val categoryArg = backStackEntry.arguments?.getString("category")
                 val amountArg = backStackEntry.arguments?.getString("amount")?.toDoubleOrNull()
+                val editIdArg = backStackEntry.arguments?.getString("editId")?.toLongOrNull()
 
                 AddTransactionScreen(
                     viewModel = viewModel,
                     presetCategory = categoryArg,
                     presetAmount = amountArg,
+                    editTransactionId = editIdArg,
                     onSaved = { navController.popBackStack() },
                     onCancel = { navController.popBackStack() }
                 )
