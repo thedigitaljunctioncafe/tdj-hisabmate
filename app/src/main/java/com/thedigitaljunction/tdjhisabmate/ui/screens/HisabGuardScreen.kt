@@ -19,9 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lock
@@ -467,7 +467,7 @@ private fun SmartPromptCard(
                         "payments" -> Icons.Default.Payments
                         "directions_car" -> Icons.Default.DirectionsCar
                         "lightbulb" -> Icons.Default.Lightbulb
-                        else -> Icons.Default.HelpOutline
+                        else -> Icons.AutoMirrored.Filled.HelpOutline
                     },
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,

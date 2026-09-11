@@ -1,6 +1,8 @@
 package com.thedigitaljunction.tdjhisabmate.ui.util
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CardGiftcard
@@ -15,12 +17,10 @@ import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -53,7 +53,7 @@ object Formatters {
             "shopping_cart", "groceries" -> Icons.Default.ShoppingCart
             "directions_car", "transport", "fuel" -> Icons.Default.DirectionsCar
             "shopping_bag", "shopping" -> Icons.Default.ShoppingBag
-            "receipt_long", "bills", "utilities" -> Icons.Default.ReceiptLong
+            "receipt_long", "bills", "utilities" -> Icons.AutoMirrored.Filled.ReceiptLong
             "home", "rent" -> Icons.Default.Home
             "account_balance", "emi", "bank" -> Icons.Default.AccountBalance
             "local_hospital", "health", "medical" -> Icons.Default.LocalHospital
@@ -64,7 +64,7 @@ object Formatters {
             "group", "family" -> Icons.Default.Group
             "work", "business" -> Icons.Default.Work
             "payments", "salary" -> Icons.Default.Payments
-            "trending_up", "investment" -> Icons.Default.TrendingUp
+            "trending_up", "investment" -> Icons.AutoMirrored.Filled.TrendingUp
             "card_giftcard", "gift" -> Icons.Default.CardGiftcard
             "credit_card" -> Icons.Default.CreditCard
             "attach_money" -> Icons.Default.AttachMoney

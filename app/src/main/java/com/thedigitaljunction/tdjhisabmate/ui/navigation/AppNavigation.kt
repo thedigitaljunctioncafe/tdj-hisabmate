@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.ReceiptLong
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.FloatingActionButton
@@ -62,7 +62,7 @@ import com.thedigitaljunction.tdjhisabmate.update.ui.UpdateDialog
 
 sealed class Screen(val route: String, val title: String, val filledIcon: ImageVector, val outlinedIcon: ImageVector) {
     data object Home : Screen("home", "Home", Icons.Filled.Home, Icons.Outlined.Home)
-    data object Transactions : Screen("transactions", "Transactions", Icons.Filled.ReceiptLong, Icons.Outlined.ReceiptLong)
+    data object Transactions : Screen("transactions", "Transactions", Icons.AutoMirrored.Filled.ReceiptLong, Icons.AutoMirrored.Outlined.ReceiptLong)
     data object Guard : Screen("guard", "Hisab Guard", Icons.Filled.Shield, Icons.Outlined.Shield)
     data object More : Screen("more", "More", Icons.Filled.Widgets, Icons.Outlined.Widgets)
 }

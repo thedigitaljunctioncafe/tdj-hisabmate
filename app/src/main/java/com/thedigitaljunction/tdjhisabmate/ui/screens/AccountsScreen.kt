@@ -133,17 +133,46 @@ fun AccountsScreen(
                 )
             }
 
-            items(accountsWithBalances, key = { it.account.id }) { item ->
-                AccountItemCard(
-                    item = item,
-                    currency = preferences.currency,
-                    onEdit = { updatedAccount ->
-                        viewModel.updateAccount(updatedAccount)
-                    },
-                    onDelete = {
-                        viewModel.deleteAccount(item.account)
+            if (accountsWithBalances.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "No active accounts or wallets found.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(onClick = { showAddDialog = true }) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Add First Account")
+                            }
+                        }
                     }
-                )
+                }
+            } else {
+                items(accountsWithBalances, key = { it.account.id }) { item ->
+                    AccountItemCard(
+                        item = item,
+                        currency = preferences.currency,
+                        onEdit = { updatedAccount ->
+                            viewModel.updateAccount(updatedAccount)
+                        },
+                        onDelete = {
+                            viewModel.deleteAccount(item.account)
+                        }
+                    )
+                }
             }
         }
     }
