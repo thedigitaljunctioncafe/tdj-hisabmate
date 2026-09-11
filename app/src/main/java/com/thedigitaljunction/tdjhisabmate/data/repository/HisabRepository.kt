@@ -216,18 +216,25 @@ class HisabRepository(private val database: HisabDatabase) {
     suspend fun deleteRecurring(recurring: RecurringTransactionEntity) = recurringDao.delete(recurring)
 
     suspend fun processRecurringInstance(recurring: RecurringTransactionEntity) {
-        val transaction = TransactionEntity(
-            type = recurring.type,
-            amount = recurring.amount,
-            dateMillis = System.currentTimeMillis(),
-            categoryId = recurring.categoryId,
-            categoryName = recurring.categoryName,
-            accountId = recurring.accountId,
-            accountName = recurring.accountName,
-            paymentMethod = recurring.paymentMethod,
-            note = "[Recurring] ${recurring.title}: ${recurring.note}".trim()
-        )
-        transactionDao.insert(transaction)
+        // Prevent duplicate: check if a transaction for this recurring item on this due date already exists
+        val (start, end) = Pair(DateUtils.getStartOfDay(recurring.nextDueDateMillis), DateUtils.getEndOfDay(recurring.nextDueDateMillis))
+        val existing = transactionDao.getTransactionsBetweenSync(start, end)
+            .firstOrNull { it.accountId == recurring.accountId && it.amount == recurring.amount && it.note.contains(recurring.title) }
+
+        if (existing == null) {
+            val transaction = TransactionEntity(
+                type = recurring.type,
+                amount = recurring.amount,
+                dateMillis = recurring.nextDueDateMillis.coerceAtMost(System.currentTimeMillis()),
+                categoryId = recurring.categoryId,
+                categoryName = recurring.categoryName,
+                accountId = recurring.accountId,
+                accountName = recurring.accountName,
+                paymentMethod = recurring.paymentMethod,
+                note = "[Recurring] ${recurring.title}: ${recurring.note}".trim()
+            )
+            transactionDao.insert(transaction)
+        }
 
         val nextDue = DateUtils.calculateNextDueDate(recurring.nextDueDateMillis, recurring.frequency)
         val updated = recurring.copy(nextDueDateMillis = nextDue)

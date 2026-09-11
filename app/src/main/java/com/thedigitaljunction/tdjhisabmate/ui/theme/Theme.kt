@@ -68,13 +68,3 @@ fun TDJHisabMateTheme(
         content = content
     )
 }
-
-// Backward compatibility alias
-@Composable
-fun MyApplicationTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
-    content: @Composable () -> Unit
-) {
-    TDJHisabMateTheme(darkTheme = darkTheme, dynamicColor = dynamicColor, content = content)
-}

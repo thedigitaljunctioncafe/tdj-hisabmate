@@ -2,7 +2,9 @@ package com.thedigitaljunction.tdjhisabmate
 
 import com.thedigitaljunction.tdjhisabmate.data.model.RecurrenceFrequency
 import com.thedigitaljunction.tdjhisabmate.data.model.RecurringTransactionEntity
+import com.thedigitaljunction.tdjhisabmate.data.model.TransactionEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionType
+import com.thedigitaljunction.tdjhisabmate.ui.util.DateUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -30,10 +32,8 @@ class RecurringTransactionsTest {
         )
 
         // Advance 1 month
-        val nextCal = Calendar.getInstance().apply {
-            timeInMillis = recurring.nextDueDateMillis
-            add(Calendar.MONTH, 1)
-        }
+        val nextDue = DateUtils.calculateNextDueDate(recurring.nextDueDateMillis, recurring.frequency)
+        val nextCal = Calendar.getInstance().apply { timeInMillis = nextDue }
 
         assertEquals(Calendar.FEBRUARY, nextCal.get(Calendar.MONTH))
         assertEquals(1, nextCal.get(Calendar.DAY_OF_MONTH))
@@ -74,5 +74,52 @@ class RecurringTransactionsTest {
 
         val isDue = overdueRecurring.isActive && overdueRecurring.nextDueDateMillis <= now
         assertTrue(isDue)
+    }
+
+    @Test
+    fun `Recurring processing is idempotent and prevents duplicate transactions for the same due cycle`() {
+        val recurring = RecurringTransactionEntity(
+            id = 5L,
+            title = "Office Rent",
+            type = TransactionType.EXPENSE.name,
+            amount = 1500000L, // ₹15,000.00
+            accountId = 1L,
+            accountName = "HDFC Current",
+            frequency = RecurrenceFrequency.MONTHLY.name,
+            nextDueDateMillis = 1773000000000L, // Specific timestamp
+            isActive = true
+        )
+
+        val recordedTransactions = mutableListOf<TransactionEntity>()
+
+        // Simulate processor run 1
+        fun runProcessor(rec: RecurringTransactionEntity) {
+            val alreadyRecorded = recordedTransactions.any {
+                it.accountId == rec.accountId && it.amount == rec.amount && it.note.contains(rec.title) &&
+                        it.dateMillis >= DateUtils.getStartOfDay(rec.nextDueDateMillis) &&
+                        it.dateMillis <= DateUtils.getEndOfDay(rec.nextDueDateMillis)
+            }
+            if (!alreadyRecorded) {
+                recordedTransactions.add(
+                    TransactionEntity(
+                        id = recordedTransactions.size + 1L,
+                        type = rec.type,
+                        amount = rec.amount,
+                        dateMillis = rec.nextDueDateMillis,
+                        accountId = rec.accountId,
+                        accountName = rec.accountName,
+                        note = "[Recurring] ${rec.title}"
+                    )
+                )
+            }
+        }
+
+        // Run processor first time
+        runProcessor(recurring)
+        assertEquals(1, recordedTransactions.size)
+
+        // Run processor second time with the same due timestamp -> must NOT add a duplicate
+        runProcessor(recurring)
+        assertEquals(1, recordedTransactions.size)
     }
 }

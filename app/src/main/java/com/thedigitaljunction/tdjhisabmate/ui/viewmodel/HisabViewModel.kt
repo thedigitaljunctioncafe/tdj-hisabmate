@@ -480,7 +480,13 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setPin(pin: String, enabled: Boolean) {
         viewModelScope.launch {
-            val hashed = if (pin.isNotEmpty()) SecurityUtils.hashPin(pin) else ""
+            val hashed = if (pin.isNotEmpty()) {
+                if (pin.length == 64 && pin.all { it in "0123456789abcdefABCDEF" }) {
+                    pin
+                } else {
+                    SecurityUtils.hashPin(pin)
+                }
+            } else ""
             preferencesRepository.setPin(hashed, enabled)
         }
     }

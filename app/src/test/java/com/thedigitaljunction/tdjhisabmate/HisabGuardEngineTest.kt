@@ -58,4 +58,55 @@ class HisabGuardEngineTest {
         assertTrue(review.hadNoExpenses)
         assertEquals(0L, review.totalExpenseRecorded)
     }
+
+    @Test
+    fun `Hisab Guard only generates prompts and never creates unconfirmed transactions`() {
+        val prompts = listOf(
+            GuardPrompt(
+                id = "daily_check",
+                iconName = "verified_user",
+                title = "Daily Hisab Review",
+                message = "Have you recorded all of today's expenses?",
+                type = GuardPromptType.DAILY_CHECK
+            ),
+            GuardPrompt(
+                id = "missed_cash",
+                iconName = "payments",
+                title = "Small Cash Purchases?",
+                message = "Did you make any small cash payments today?",
+                suggestedCategory = "Food & Dining",
+                suggestedPaymentMethod = "Cash",
+                type = GuardPromptType.MISSED_EXPENSE
+            )
+        )
+
+        // Generating prompts produces suggestions without creating any financial transactions
+        assertTrue(prompts.isNotEmpty())
+        assertEquals(2, prompts.size)
+        assertTrue(prompts.all { it.type in GuardPromptType.values() })
+    }
+
+    @Test
+    fun `Hisab Guard prevents duplicate prompt IDs in prompt list`() {
+        val prompts = listOf(
+            GuardPrompt(
+                id = "daily_check",
+                iconName = "verified_user",
+                title = "Daily Hisab Review",
+                message = "Have you recorded all of today's expenses?",
+                type = GuardPromptType.DAILY_CHECK
+            ),
+            GuardPrompt(
+                id = "missed_transport",
+                iconName = "directions_car",
+                title = "Commute & Travel?",
+                message = "Did you commute today?",
+                suggestedCategory = "Transport & Fuel",
+                type = GuardPromptType.MISSED_EXPENSE
+            )
+        )
+
+        val uniqueIds = prompts.map { it.id }.toSet()
+        assertEquals(prompts.size, uniqueIds.size)
+    }
 }

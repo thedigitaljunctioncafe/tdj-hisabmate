@@ -38,6 +38,7 @@ import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
 fun PinLockScreen(
     correctPin: String,
     onUnlocked: () -> Unit,
+    onMigratePin: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var enteredPin by remember { mutableStateOf("") }
@@ -151,7 +152,7 @@ fun PinLockScreen(
                                             val newPin = enteredPin + key
                                             enteredPin = newPin
                                             if (newPin.length == 4) {
-                                                if (SecurityUtils.verifyPin(newPin, correctPin)) {
+                                                if (SecurityUtils.verifyAndMigratePin(newPin, correctPin, { migratedHash -> onMigratePin?.invoke(migratedHash) })) {
                                                     onUnlocked()
                                                 } else {
                                                     isError = true

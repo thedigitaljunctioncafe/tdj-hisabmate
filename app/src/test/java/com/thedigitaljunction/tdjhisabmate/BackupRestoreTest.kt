@@ -2,7 +2,6 @@ package com.thedigitaljunction.tdjhisabmate
 
 import com.thedigitaljunction.tdjhisabmate.data.model.AccountEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.AccountType
-import com.thedigitaljunction.tdjhisabmate.data.model.CategoryEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionType
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
@@ -73,6 +72,20 @@ class BackupRestoreTest {
         val restoredTxn = parsed.getJSONArray("transactions").getJSONObject(0)
         assertEquals(15025L, restoredTxn.getLong("amount"))
         assertEquals("Food & Dining", restoredTxn.getString("categoryName"))
+    }
+
+    @Test
+    fun `Backup and restore preserves exact paise values without precision loss`() {
+        val testAmounts = listOf(1L, 100L, 10010L, 14999L, 15000050L) // ₹0.01, ₹1.00, ₹100.10, ₹149.99, ₹1,50,000.50
+        
+        testAmounts.forEach { amountPaise ->
+            val obj = JSONObject()
+            obj.put("amount", amountPaise)
+            
+            val serialized = obj.toString()
+            val deserialized = JSONObject(serialized).getLong("amount")
+            assertEquals(amountPaise, deserialized)
+        }
     }
 
     @Test

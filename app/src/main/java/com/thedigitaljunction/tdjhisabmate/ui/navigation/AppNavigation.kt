@@ -79,7 +79,8 @@ fun MainApp(
     if (preferences.isPinEnabled && !isSessionUnlocked) {
         PinLockScreen(
             correctPin = preferences.pinCode,
-            onUnlocked = { isSessionUnlocked = true }
+            onUnlocked = { isSessionUnlocked = true },
+            onMigratePin = { hashedPin -> viewModel.setPin(hashedPin, true) }
         )
         return
     }

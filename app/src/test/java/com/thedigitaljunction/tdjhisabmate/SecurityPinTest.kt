@@ -36,4 +36,29 @@ class SecurityPinTest {
         assertTrue(SecurityUtils.verifyPin("9876", legacyPlainPin))
         assertFalse(SecurityUtils.verifyPin("1111", legacyPlainPin))
     }
+
+    @Test
+    fun `Legacy plain-text PIN migrates to SHA-256 hash after successful verification`() {
+        val legacyStoredPin = "4321"
+        assertTrue(SecurityUtils.isLegacyPlainTextPin(legacyStoredPin))
+
+        var migratedHash: String? = null
+        val verified = SecurityUtils.verifyAndMigratePin("4321", legacyStoredPin) { hash ->
+            migratedHash = hash
+        }
+
+        assertTrue(verified)
+        assertEquals(SecurityUtils.hashPin("4321"), migratedHash)
+        assertFalse(SecurityUtils.isLegacyPlainTextPin(migratedHash!!))
+    }
+
+    @Test
+    fun `New PIN is never stored as plain text`() {
+        val userRawPin = "2468"
+        val hashedToStore = SecurityUtils.hashPin(userRawPin)
+
+        assertNotEquals(userRawPin, hashedToStore)
+        assertEquals(64, hashedToStore.length)
+        assertFalse(SecurityUtils.isLegacyPlainTextPin(hashedToStore))
+    }
 }
