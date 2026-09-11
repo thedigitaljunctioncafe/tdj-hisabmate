@@ -27,6 +27,7 @@ import com.thedigitaljunction.tdjhisabmate.hisabguard.HisabGuardEngine
 import com.thedigitaljunction.tdjhisabmate.hisabguard.HisabGuardStatus
 import com.thedigitaljunction.tdjhisabmate.ui.util.DateUtils
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
+import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -478,7 +479,10 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setPin(pin: String, enabled: Boolean) {
-        viewModelScope.launch { preferencesRepository.setPin(pin, enabled) }
+        viewModelScope.launch {
+            val hashed = if (pin.isNotEmpty()) SecurityUtils.hashPin(pin) else ""
+            preferencesRepository.setPin(hashed, enabled)
+        }
     }
 
     fun setHisabGuardEnabled(enabled: Boolean) {

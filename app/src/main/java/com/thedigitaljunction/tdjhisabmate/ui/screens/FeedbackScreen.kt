@@ -1,5 +1,6 @@
 package com.thedigitaljunction.tdjhisabmate.ui.screens
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -164,7 +165,7 @@ fun FeedbackScreen(
                     Button(
                         onClick = {
                             viewModel.submitFeedback(ratingStars, selectedCategory, comments, contactInfo) {
-                                Toast.makeText(context, "Thank you! Your feedback has been recorded.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "Your feedback has been saved on this device.", Toast.LENGTH_LONG).show()
                                 comments = ""
                                 contactInfo = ""
                             }
@@ -174,7 +175,24 @@ fun FeedbackScreen(
                             .testTag("submit_feedback_btn"),
                         enabled = comments.isNotBlank()
                     ) {
-                        Text("Submit Feedback")
+                        Text("Save Feedback Locally")
+                    }
+
+                    if (comments.isNotBlank()) {
+                        OutlinedButton(
+                            onClick = {
+                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_SUBJECT, "TDJ HisabMate Feedback - $selectedCategory ($ratingStars Stars)")
+                                    putExtra(Intent.EXTRA_TEXT, "Rating: $ratingStars/5 Stars\nCategory: $selectedCategory\nContact: $contactInfo\n\nFeedback:\n$comments")
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, "Share Feedback via...")
+                                context.startActivity(shareIntent)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Share via Email / Apps")
+                        }
                     }
                 }
             }

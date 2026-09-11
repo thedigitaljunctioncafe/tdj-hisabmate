@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
 
 @Composable
 fun PinLockScreen(
@@ -150,7 +151,7 @@ fun PinLockScreen(
                                             val newPin = enteredPin + key
                                             enteredPin = newPin
                                             if (newPin.length == 4) {
-                                                if (newPin == correctPin) {
+                                                if (SecurityUtils.verifyPin(newPin, correctPin)) {
                                                     onUnlocked()
                                                 } else {
                                                     isError = true
