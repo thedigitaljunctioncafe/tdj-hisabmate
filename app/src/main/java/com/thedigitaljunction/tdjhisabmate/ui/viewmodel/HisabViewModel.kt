@@ -28,6 +28,9 @@ import com.thedigitaljunction.tdjhisabmate.hisabguard.HisabGuardStatus
 import com.thedigitaljunction.tdjhisabmate.ui.util.DateUtils
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
 import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
+import com.thedigitaljunction.tdjhisabmate.update.GitHubRelease
+import com.thedigitaljunction.tdjhisabmate.update.UpdateCheckResult
+import com.thedigitaljunction.tdjhisabmate.update.UpdateChecker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -49,6 +52,14 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = HisabRepository(database)
     private val preferencesRepository = UserPreferencesRepository(application)
     val guardEngine = HisabGuardEngine(repository)
+    private val updateChecker = UpdateChecker()
+
+    // Update Checker State
+    private val _updateCheckResult = MutableStateFlow<UpdateCheckResult>(UpdateCheckResult.Idle)
+    val updateCheckResult: StateFlow<UpdateCheckResult> = _updateCheckResult.asStateFlow()
+
+    private val _showAutoUpdateDialog = MutableStateFlow(false)
+    val showAutoUpdateDialog: StateFlow<Boolean> = _showAutoUpdateDialog.asStateFlow()
 
     // User preferences
     val preferences: StateFlow<UserPreferences> = preferencesRepository.userPreferencesFlow
@@ -249,6 +260,7 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             seedDefaultData(database)
             refreshGuardStatus()
+            checkForUpdates(isManual = false)
         }
     }
 
@@ -544,6 +556,48 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
             refreshGuardStatus()
         }
         return res
+    }
+
+    // ----------------- IN-APP UPDATE SYSTEM -----------------
+    fun checkForUpdates(isManual: Boolean = false) {
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            val lastCheck = preferences.value.lastUpdateCheckTimestamp
+            // Auto-check at most once per 24 hours (86,400,000 ms)
+            if (!isManual && (now - lastCheck < 24L * 60 * 60 * 1000L)) {
+                return@launch
+            }
+
+            _updateCheckResult.value = UpdateCheckResult.Checking
+            val result = updateChecker.checkForUpdate()
+            _updateCheckResult.value = result
+
+            if (result is UpdateCheckResult.UpdateAvailable) {
+                if (isManual) {
+                    _showAutoUpdateDialog.value = true
+                } else {
+                    if (preferences.value.dismissedUpdateVersion != result.newVersion) {
+                        _showAutoUpdateDialog.value = true
+                    }
+                }
+            }
+
+            if (result !is UpdateCheckResult.Error || !result.isNetworkError) {
+                preferencesRepository.setLastUpdateCheckTimestamp(now)
+            }
+        }
+    }
+
+    fun dismissUpdateDialog(rememberDismissal: Boolean = false) {
+        _showAutoUpdateDialog.value = false
+        if (rememberDismissal) {
+            val currentRes = _updateCheckResult.value
+            if (currentRes is UpdateCheckResult.UpdateAvailable) {
+                viewModelScope.launch {
+                    preferencesRepository.setDismissedUpdateVersion(currentRes.newVersion)
+                }
+            }
+        }
     }
 
     companion object {

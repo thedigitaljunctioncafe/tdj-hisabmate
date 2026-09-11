@@ -57,6 +57,8 @@ import com.thedigitaljunction.tdjhisabmate.ui.screens.ReportsScreen
 import com.thedigitaljunction.tdjhisabmate.ui.screens.SecurityScreen
 import com.thedigitaljunction.tdjhisabmate.ui.screens.TransactionsScreen
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
+import com.thedigitaljunction.tdjhisabmate.update.UpdateCheckResult
+import com.thedigitaljunction.tdjhisabmate.update.ui.UpdateDialog
 
 sealed class Screen(val route: String, val title: String, val filledIcon: ImageVector, val outlinedIcon: ImageVector) {
     data object Home : Screen("home", "Home", Icons.Filled.Home, Icons.Outlined.Home)
@@ -87,6 +89,21 @@ fun MainApp(
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    val showUpdateDialog by viewModel.showAutoUpdateDialog.collectAsStateWithLifecycle()
+    val updateResult by viewModel.updateCheckResult.collectAsStateWithLifecycle()
+
+    // Global in-app update dialog
+    if (showUpdateDialog && updateResult is UpdateCheckResult.UpdateAvailable) {
+        val available = updateResult as UpdateCheckResult.UpdateAvailable
+        UpdateDialog(
+            release = available.release,
+            currentVersion = available.currentVersion,
+            newVersion = available.newVersion,
+            onDismiss = { viewModel.dismissUpdateDialog(rememberDismissal = true) },
+            onDownload = { viewModel.dismissUpdateDialog(rememberDismissal = true) }
+        )
+    }
 
     val bottomNavItems = listOf(
         Screen.Home,
@@ -306,7 +323,7 @@ fun MainApp(
 
             // About Screen
             composable("about") {
-                AboutPrivacyScreen()
+                AboutPrivacyScreen(viewModel = viewModel)
             }
         }
     }

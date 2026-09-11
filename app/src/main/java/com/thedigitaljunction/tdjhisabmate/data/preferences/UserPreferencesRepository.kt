@@ -24,7 +24,9 @@ data class UserPreferences(
     val isMissedExpensePromptEnabled: Boolean = true,
     val pinCode: String = "",
     val isPinEnabled: Boolean = false,
-    val themeMode: String = "SYSTEM" // SYSTEM, LIGHT, DARK
+    val themeMode: String = "SYSTEM", // SYSTEM, LIGHT, DARK
+    val lastUpdateCheckTimestamp: Long = 0L,
+    val dismissedUpdateVersion: String = ""
 )
 
 class UserPreferencesRepository(private val context: Context) {
@@ -41,6 +43,8 @@ class UserPreferencesRepository(private val context: Context) {
         val PIN_CODE = stringPreferencesKey("pin_code")
         val IS_PIN_ENABLED = booleanPreferencesKey("is_pin_enabled")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val LAST_UPDATE_CHECK_TIMESTAMP = androidx.datastore.preferences.core.longPreferencesKey("last_update_check_timestamp")
+        val DISMISSED_UPDATE_VERSION = stringPreferencesKey("dismissed_update_version")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { preferences ->
@@ -55,7 +59,9 @@ class UserPreferencesRepository(private val context: Context) {
             isMissedExpensePromptEnabled = preferences[Keys.IS_MISSED_EXPENSE_PROMPT_ENABLED] ?: true,
             pinCode = preferences[Keys.PIN_CODE] ?: "",
             isPinEnabled = preferences[Keys.IS_PIN_ENABLED] ?: false,
-            themeMode = preferences[Keys.THEME_MODE] ?: "SYSTEM"
+            themeMode = preferences[Keys.THEME_MODE] ?: "SYSTEM",
+            lastUpdateCheckTimestamp = preferences[Keys.LAST_UPDATE_CHECK_TIMESTAMP] ?: 0L,
+            dismissedUpdateVersion = preferences[Keys.DISMISSED_UPDATE_VERSION] ?: ""
         )
     }
 
@@ -99,5 +105,13 @@ class UserPreferencesRepository(private val context: Context) {
 
     suspend fun setThemeMode(themeMode: String) {
         context.dataStore.edit { it[Keys.THEME_MODE] = themeMode }
+    }
+
+    suspend fun setLastUpdateCheckTimestamp(timestamp: Long) {
+        context.dataStore.edit { it[Keys.LAST_UPDATE_CHECK_TIMESTAMP] = timestamp }
+    }
+
+    suspend fun setDismissedUpdateVersion(version: String) {
+        context.dataStore.edit { it[Keys.DISMISSED_UPDATE_VERSION] = version }
     }
 }
