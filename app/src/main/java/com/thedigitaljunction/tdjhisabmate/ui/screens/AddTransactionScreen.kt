@@ -105,6 +105,7 @@ fun AddTransactionScreen(
 
     var dateMillis by remember { mutableLongStateOf(System.currentTimeMillis()) }
     var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var isSubmitting by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
 
@@ -167,6 +168,14 @@ fun AddTransactionScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Top Header
+        val isValidAmount = MoneyUtils.parseRupeesToPaise(amountText) > 0L
+        val isValidAccounts = if (selectedType == TransactionType.TRANSFER.name) {
+            selectedAccountId != 0L && selectedToAccountId != 0L && selectedAccountId != selectedToAccountId
+        } else {
+            selectedAccountId != 0L
+        }
+        val isSaveEnabled = isValidAmount && isValidAccounts && !isSubmitting
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -182,8 +191,10 @@ fun AddTransactionScreen(
             )
             IconButton(
                 onClick = {
+                    if (isSubmitting) return@IconButton
                     val amtPaise = MoneyUtils.parseRupeesToPaise(amountText)
-                    if (amtPaise > 0L && selectedAccountId != 0L) {
+                    if (amtPaise > 0L && isValidAccounts) {
+                        isSubmitting = true
                         val currentAcc = accounts.find { it.id == selectedAccountId }
                         val toAcc = if (selectedType == TransactionType.TRANSFER.name) accounts.find { it.id == selectedToAccountId } else null
 
@@ -226,9 +237,9 @@ fun AddTransactionScreen(
                     }
                 },
                 modifier = Modifier.testTag("save_transaction_btn"),
-                enabled = MoneyUtils.parseRupeesToPaise(amountText) > 0L
+                enabled = isSaveEnabled
             ) {
-                Icon(Icons.Default.Check, contentDescription = "Save", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Check, contentDescription = "Save", tint = if (isSaveEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
             }
         }
 
@@ -335,8 +346,11 @@ fun AddTransactionScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
                                 .clickable {
-                                    val cur = amountText.toDoubleOrNull() ?: 0.0
-                                    amountText = (cur + inc).toInt().toString()
+                                    val curPaise = MoneyUtils.parseRupeesToPaise(amountText)
+                                    val incPaise = inc * 100L
+                                    val totalPaise = curPaise + incPaise
+                                    val rup = MoneyUtils.paiseToRupees(totalPaise)
+                                    amountText = if (rup % 1.0 == 0.0) rup.toLong().toString() else rup.toString()
                                 }
                         ) {
                             Text(
@@ -379,13 +393,22 @@ fun AddTransactionScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(accounts.filter { it.id != selectedAccountId }) { acc ->
-                        FilterChip(
-                            selected = selectedToAccountId == acc.id,
-                            onClick = { selectedToAccountId = acc.id },
-                            label = { Text(acc.name) }
-                        )
+                val availableDestAccounts = accounts.filter { it.id != selectedAccountId }
+                if (availableDestAccounts.isEmpty()) {
+                    Text(
+                        text = "At least 2 accounts are needed to record a transfer. Please create another account first in Accounts.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                } else {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(availableDestAccounts) { acc ->
+                            FilterChip(
+                                selected = selectedToAccountId == acc.id,
+                                onClick = { selectedToAccountId = acc.id },
+                                label = { Text(acc.name) }
+                            )
+                        }
                     }
                 }
             }
@@ -551,8 +574,10 @@ fun AddTransactionScreen(
         // Save Button
         Button(
             onClick = {
+                if (isSubmitting) return@Button
                 val amtPaise = MoneyUtils.parseRupeesToPaise(amountText)
-                if (amtPaise > 0L && selectedAccountId != 0L) {
+                if (amtPaise > 0L && isValidAccounts) {
+                    isSubmitting = true
                     val currentAcc = accounts.find { it.id == selectedAccountId }
                     val toAcc = if (selectedType == TransactionType.TRANSFER.name) accounts.find { it.id == selectedToAccountId } else null
 
@@ -598,7 +623,7 @@ fun AddTransactionScreen(
                 .fillMaxWidth()
                 .height(52.dp)
                 .testTag("save_transaction_primary_btn"),
-            enabled = MoneyUtils.parseRupeesToPaise(amountText) > 0L,
+            enabled = isSaveEnabled,
             shape = RoundedCornerShape(16.dp)
         ) {
             Icon(Icons.Default.Done, contentDescription = null)

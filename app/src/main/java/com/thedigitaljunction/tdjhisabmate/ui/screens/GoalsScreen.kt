@@ -282,7 +282,7 @@ fun GoalsScreen(
                     onClick = {
                         val amtPaise = MoneyUtils.parseRupeesToPaise(amountText)
                         if (amtPaise > 0L) {
-                            val newTotal = if (isDeposit) goal.savedAmount + amtPaise else goal.savedAmount - amtPaise
+                            val newTotal = if (isDeposit) goal.savedAmount + amtPaise else maxOf(0L, goal.savedAmount - amtPaise)
                             viewModel.updateGoalFunds(goal, newTotal)
                             goalForFundsUpdate = null
                         }

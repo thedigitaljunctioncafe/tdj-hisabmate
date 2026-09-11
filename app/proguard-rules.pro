@@ -1,21 +1,15 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Room Database rules
+-keep class androidx.room.** { *; }
+-dontwarn androidx.room.**
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Domain and Data Models (TDJ HisabMate)
+-keep class com.thedigitaljunction.tdjhisabmate.data.model.** { *; }
+-keepclassmembers class com.thedigitaljunction.tdjhisabmate.data.model.** { *; }
+-keep class com.thedigitaljunction.tdjhisabmate.hisabguard.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Kotlin Coroutines and Flow
+-keepnames class kotlinx.coroutines.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Security and Utils
+-keep class com.thedigitaljunction.tdjhisabmate.ui.util.** { *; }
+
