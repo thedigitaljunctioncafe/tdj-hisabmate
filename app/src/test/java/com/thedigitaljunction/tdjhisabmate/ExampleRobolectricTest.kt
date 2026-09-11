@@ -2,7 +2,6 @@ package com.thedigitaljunction.tdjhisabmate
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.example.R
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
