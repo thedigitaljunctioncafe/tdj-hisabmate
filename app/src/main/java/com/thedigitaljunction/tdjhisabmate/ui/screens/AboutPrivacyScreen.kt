@@ -355,6 +355,30 @@ fun AboutPrivacyScreen(
                     BulletPoint("No login, phone number, or email required to use")
                     BulletPoint("Hisab Guard patterns are computed purely on-device")
                     BulletPoint("Instant JSON and CSV exports whenever you choose")
+                    BulletPoint("Privacy inquiries: thedigitaljunctioncafe@gmail.com")
+                }
+            }
+        }
+
+        // Informational Financial Disclaimer
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Financial Disclaimer", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = "TDJ HisabMate is a personal finance tracking and organization tool. It does not provide professional financial, investment, tax, legal, or credit advice. All insights and metrics are calculated solely from user-entered records.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }
