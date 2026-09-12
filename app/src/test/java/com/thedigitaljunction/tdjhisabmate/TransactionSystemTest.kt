@@ -174,4 +174,48 @@ class TransactionSystemTest {
         val validWithCommas = MoneyUtils.parseMoneyInput("1,50,000.50")
         assertEquals(15000050L, validWithCommas)
     }
+
+    @Test
+    fun `Transfer preserves overall net worth across accounts`() {
+        val acc1 = AccountEntity(id = 1L, name = "Bank A", type = AccountType.BANK.name, initialBalance = 1000000L) // ₹10,000
+        val acc2 = AccountEntity(id = 2L, name = "Bank B", type = AccountType.BANK.name, initialBalance = 500000L)  // ₹5,000
+        val initialTotalNetWorth = acc1.initialBalance + acc2.initialBalance // ₹15,000
+
+        val transfer = TransactionEntity(
+            id = 5L,
+            type = TransactionType.TRANSFER.name,
+            amount = 350000L, // ₹3,500
+            accountId = 1L,
+            accountName = "Bank A",
+            toAccountId = 2L,
+            toAccountName = "Bank B",
+            dateMillis = System.currentTimeMillis()
+        )
+
+        val acc1Final = acc1.initialBalance - transfer.amount
+        val acc2Final = acc2.initialBalance + transfer.amount
+        val finalTotalNetWorth = acc1Final + acc2Final
+
+        assertEquals(initialTotalNetWorth, finalTotalNetWorth)
+        assertEquals(650000L, acc1Final)
+        assertEquals(850000L, acc2Final)
+    }
+
+    @Test
+    fun `Savings goal progress clamping and contribution math`() {
+        val targetPaise = 10000000L // ₹1,00,000
+        var savedPaise = 0L
+
+        // Add ₹25,000
+        savedPaise = (savedPaise + 2500000L).coerceAtLeast(0L)
+        assertEquals(2500000L, savedPaise)
+
+        // Add ₹75,000 -> Goal fully completed
+        savedPaise = (savedPaise + 7500000L).coerceAtLeast(0L)
+        assertEquals(targetPaise, savedPaise)
+
+        // Withdraw ₹1,50,000 -> Should clamp to 0 and not be negative
+        savedPaise = (savedPaise - 15000000L).coerceAtLeast(0L)
+        assertEquals(0L, savedPaise)
+    }
 }

@@ -92,7 +92,13 @@ fun AddTransactionScreen(
     }
 
     var selectedType by remember { mutableStateOf(TransactionType.EXPENSE.name) }
-    var amountText by remember { mutableStateOf(if (presetAmount != null && presetAmount > 0) presetAmount.toInt().toString() else "") }
+    var amountText by remember {
+        mutableStateOf(
+            if (presetAmount != null && presetAmount > 0) {
+                if (presetAmount % 1.0 == 0.0) presetAmount.toLong().toString() else presetAmount.toString()
+            } else ""
+        )
+    }
     var note by remember { mutableStateOf("") }
     var merchant by remember { mutableStateOf("") }
     var tags by remember { mutableStateOf("") }

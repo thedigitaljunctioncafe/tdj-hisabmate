@@ -1,5 +1,6 @@
 package com.thedigitaljunction.tdjhisabmate.data.repository
 
+import androidx.room.withTransaction
 import com.thedigitaljunction.tdjhisabmate.data.database.HisabDatabase
 import com.thedigitaljunction.tdjhisabmate.data.model.AccountEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.AccountType
@@ -215,7 +216,7 @@ class HisabRepository(private val database: HisabDatabase) {
     suspend fun updateRecurring(recurring: RecurringTransactionEntity) = recurringDao.update(recurring)
     suspend fun deleteRecurring(recurring: RecurringTransactionEntity) = recurringDao.delete(recurring)
 
-    suspend fun processRecurringInstance(recurring: RecurringTransactionEntity) {
+    suspend fun processRecurringInstance(recurring: RecurringTransactionEntity) = database.withTransaction {
         // Prevent duplicate: check if a transaction for this recurring item on this due date already exists
         val (start, end) = Pair(DateUtils.getStartOfDay(recurring.nextDueDateMillis), DateUtils.getEndOfDay(recurring.nextDueDateMillis))
         val existing = transactionDao.getTransactionsBetweenSync(start, end)
@@ -462,310 +463,312 @@ class HisabRepository(private val database: HisabDatabase) {
 
             val isV1Backup = !root.has("backupVersion") || root.optInt("backupVersion", 1) < 2
 
-            // Fetch current state of the database to perform intelligent duplicate detection
-            val existingData = getAllDataForExport()
+            val msg = database.withTransaction {
+                // Fetch current state of the database to perform intelligent duplicate detection
+                val existingData = getAllDataForExport()
 
-            // 1. Restore accounts (duplicate-safe by account name)
-            val existingAccountsByName = existingData.accounts.associateBy { it.name.trim().lowercase() }.toMutableMap()
-            val accountIdMap = mutableMapOf<Long, Long>()
+                // 1. Restore accounts (duplicate-safe by account name)
+                val existingAccountsByName = existingData.accounts.associateBy { it.name.trim().lowercase() }.toMutableMap()
+                val accountIdMap = mutableMapOf<Long, Long>()
 
-            if (root.has("accounts")) {
-                val accArray = root.getJSONArray("accounts")
-                for (i in 0 until accArray.length()) {
-                    val obj = accArray.getJSONObject(i)
-                    val backupId = obj.optLong("id", -1L)
-                    val name = obj.getString("name")
-                    val key = name.trim().lowercase()
+                if (root.has("accounts")) {
+                    val accArray = root.getJSONArray("accounts")
+                    for (i in 0 until accArray.length()) {
+                        val obj = accArray.getJSONObject(i)
+                        val backupId = obj.optLong("id", -1L)
+                        val name = obj.getString("name")
+                        val key = name.trim().lowercase()
 
-                    val rawBal = if (isV1Backup) {
-                        MoneyUtils.rupeesToPaise(obj.optDouble("initialBalance", 0.0))
-                    } else {
-                        obj.optLong("initialBalance", 0L)
-                    }
+                        val rawBal = if (isV1Backup) {
+                            MoneyUtils.rupeesToPaise(obj.optDouble("initialBalance", 0.0))
+                        } else {
+                            obj.optLong("initialBalance", 0L)
+                        }
 
-                    if (existingAccountsByName.containsKey(key)) {
-                        val existingAcc = existingAccountsByName[key]!!
-                        if (backupId != -1L) accountIdMap[backupId] = existingAcc.id
-                    } else {
-                        val newAcc = AccountEntity(
-                            name = name,
-                            type = obj.optString("type", AccountType.BANK.name),
-                            initialBalance = rawBal,
-                            colorHex = obj.optLong("colorHex", 0xFF00695CL),
-                            isArchived = obj.optBoolean("isArchived", false),
-                            createdAt = obj.optLong("createdAt", System.currentTimeMillis())
-                        )
-                        val insertedId = accountDao.insert(newAcc)
-                        val created = newAcc.copy(id = insertedId)
-                        existingAccountsByName[key] = created
-                        if (backupId != -1L) accountIdMap[backupId] = insertedId
-                    }
-                }
-            }
-
-            // 2. Restore categories (duplicate-safe by name and type)
-            val existingCategoriesByNameAndType = existingData.categories.associateBy { "${it.name.trim().lowercase()}_${it.type}" }.toMutableMap()
-            val categoryIdMap = mutableMapOf<Long, Long>()
-
-            if (root.has("categories")) {
-                val catArray = root.getJSONArray("categories")
-                for (i in 0 until catArray.length()) {
-                    val obj = catArray.getJSONObject(i)
-                    val backupId = obj.optLong("id", -1L)
-                    val name = obj.getString("name")
-                    val type = obj.optString("type", TransactionType.EXPENSE.name)
-                    val key = "${name.trim().lowercase()}_$type"
-
-                    if (existingCategoriesByNameAndType.containsKey(key)) {
-                        val existingCat = existingCategoriesByNameAndType[key]!!
-                        if (backupId != -1L) categoryIdMap[backupId] = existingCat.id
-                    } else {
-                        val newCat = CategoryEntity(
-                            name = name,
-                            type = type,
-                            iconName = obj.optString("iconName", "category"),
-                            colorHex = obj.optLong("colorHex", 0xFF00796BL),
-                            isDefault = obj.optBoolean("isDefault", false),
-                            isArchived = obj.optBoolean("isArchived", false)
-                        )
-                        val insertedId = categoryDao.insert(newCat)
-                        val created = newCat.copy(id = insertedId)
-                        existingCategoriesByNameAndType[key] = created
-                        if (backupId != -1L) categoryIdMap[backupId] = insertedId
-                    }
-                }
-            }
-
-            // 3. Restore transactions (duplicate-safe signature matching)
-            fun txnSignature(
-                type: String,
-                amount: Long,
-                dateMillis: Long,
-                accountId: Long,
-                categoryName: String,
-                note: String,
-                merchant: String
-            ): String {
-                return "$type|$amount|$dateMillis|$accountId|${categoryName.trim().lowercase()}|${note.trim().lowercase()}|${merchant.trim().lowercase()}"
-            }
-
-            val existingSignatures = existingData.transactions.map {
-                txnSignature(it.type, it.amount, it.dateMillis, it.accountId, it.categoryName, it.note, it.merchant)
-            }.toMutableSet()
-
-            var importedTxnCount = 0
-            var duplicateTxnCount = 0
-            val txnsToInsert = mutableListOf<TransactionEntity>()
-
-            if (root.has("transactions")) {
-                val txnArray = root.getJSONArray("transactions")
-                for (i in 0 until txnArray.length()) {
-                    val obj = txnArray.getJSONObject(i)
-                    val rawAmount = if (isV1Backup) {
-                        MoneyUtils.rupeesToPaise(obj.getDouble("amount"))
-                    } else {
-                        obj.getLong("amount")
-                    }
-
-                    val backupAccId = obj.optLong("accountId", 1L)
-                    val targetAccId = accountIdMap[backupAccId] ?: backupAccId
-                    val backupCatId = if (obj.isNull("categoryId")) null else obj.getLong("categoryId")
-                    val targetCatId = backupCatId?.let { categoryIdMap[it] ?: it }
-                    val backupToAccId = if (obj.isNull("toAccountId")) null else obj.getLong("toAccountId")
-                    val targetToAccId = backupToAccId?.let { accountIdMap[it] ?: it }
-
-                    val type = obj.getString("type")
-                    val dateMillis = obj.optLong("dateMillis", System.currentTimeMillis())
-                    val categoryName = obj.optString("categoryName", "General")
-                    val accountName = obj.optString("accountName", "Primary Account")
-                    val note = obj.optString("note", "")
-                    val merchant = obj.optString("merchant", "")
-
-                    val sig = txnSignature(type, rawAmount, dateMillis, targetAccId, categoryName, note, merchant)
-                    if (existingSignatures.contains(sig)) {
-                        duplicateTxnCount++
-                    } else {
-                        existingSignatures.add(sig)
-                        txnsToInsert.add(
-                            TransactionEntity(
-                                type = type,
-                                amount = rawAmount,
-                                dateMillis = dateMillis,
-                                categoryId = targetCatId,
-                                categoryName = categoryName,
-                                accountId = targetAccId,
-                                accountName = accountName,
-                                toAccountId = targetToAccId,
-                                toAccountName = if (obj.isNull("toAccountName")) null else obj.getString("toAccountName"),
-                                paymentMethod = obj.optString("paymentMethod", "UPI"),
-                                note = note,
-                                merchant = merchant,
-                                tags = obj.optString("tags", ""),
+                        if (existingAccountsByName.containsKey(key)) {
+                            val existingAcc = existingAccountsByName[key]!!
+                            if (backupId != -1L) accountIdMap[backupId] = existingAcc.id
+                        } else {
+                            val newAcc = AccountEntity(
+                                name = name,
+                                type = obj.optString("type", AccountType.BANK.name),
+                                initialBalance = rawBal,
+                                colorHex = obj.optLong("colorHex", 0xFF00695CL),
+                                isArchived = obj.optBoolean("isArchived", false),
                                 createdAt = obj.optLong("createdAt", System.currentTimeMillis())
                             )
-                        )
-                        importedTxnCount++
-                    }
-                }
-                if (txnsToInsert.isNotEmpty()) {
-                    transactionDao.insertAll(txnsToInsert)
-                }
-            }
-
-            // 4. Restore budgets (duplicate-safe by name and period)
-            val existingBudgetKeys = existingData.budgets.map { "${it.name.trim().lowercase()}_${it.period}" }.toMutableSet()
-            if (root.has("budgets")) {
-                val bArray = root.getJSONArray("budgets")
-                val list = mutableListOf<BudgetEntity>()
-                for (i in 0 until bArray.length()) {
-                    val obj = bArray.getJSONObject(i)
-                    val name = obj.getString("name")
-                    val period = obj.optString("period", "MONTHLY")
-                    val key = "${name.trim().lowercase()}_$period"
-
-                    if (!existingBudgetKeys.contains(key)) {
-                        existingBudgetKeys.add(key)
-                        val rawLimit = if (isV1Backup) {
-                            MoneyUtils.rupeesToPaise(obj.getDouble("amountLimit"))
-                        } else {
-                            obj.getLong("amountLimit")
+                            val insertedId = accountDao.insert(newAcc)
+                            val created = newAcc.copy(id = insertedId)
+                            existingAccountsByName[key] = created
+                            if (backupId != -1L) accountIdMap[backupId] = insertedId
                         }
-                        val backupCatId = if (obj.isNull("categoryId")) null else obj.getLong("categoryId")
-                        val targetCatId = backupCatId?.let { categoryIdMap[it] ?: it }
-                        list.add(
-                            BudgetEntity(
-                                name = name,
-                                amountLimit = rawLimit,
-                                categoryId = targetCatId,
-                                categoryName = if (obj.isNull("categoryName")) null else obj.getString("categoryName"),
-                                warningThresholdPercent = obj.optInt("warningThresholdPercent", 80),
-                                period = period
-                            )
-                        )
                     }
                 }
-                if (list.isNotEmpty()) budgetDao.insertAll(list)
-            }
 
-            // 5. Restore recurring (duplicate-safe by title, type, amount, frequency)
-            val existingRecurringKeys = existingData.recurring.map {
-                "${it.title.trim().lowercase()}_${it.type}_${it.amount}_${it.frequency}"
-            }.toMutableSet()
-            if (root.has("recurring")) {
-                val recArray = root.getJSONArray("recurring")
-                val list = mutableListOf<RecurringTransactionEntity>()
-                for (i in 0 until recArray.length()) {
-                    val obj = recArray.getJSONObject(i)
-                    val title = obj.getString("title")
-                    val type = obj.getString("type")
-                    val rawAmount = if (isV1Backup) {
-                        MoneyUtils.rupeesToPaise(obj.getDouble("amount"))
-                    } else {
-                        obj.getLong("amount")
+                // 2. Restore categories (duplicate-safe by name and type)
+                val existingCategoriesByNameAndType = existingData.categories.associateBy { "${it.name.trim().lowercase()}_${it.type}" }.toMutableMap()
+                val categoryIdMap = mutableMapOf<Long, Long>()
+
+                if (root.has("categories")) {
+                    val catArray = root.getJSONArray("categories")
+                    for (i in 0 until catArray.length()) {
+                        val obj = catArray.getJSONObject(i)
+                        val backupId = obj.optLong("id", -1L)
+                        val name = obj.getString("name")
+                        val type = obj.optString("type", TransactionType.EXPENSE.name)
+                        val key = "${name.trim().lowercase()}_$type"
+
+                        if (existingCategoriesByNameAndType.containsKey(key)) {
+                            val existingCat = existingCategoriesByNameAndType[key]!!
+                            if (backupId != -1L) categoryIdMap[backupId] = existingCat.id
+                        } else {
+                            val newCat = CategoryEntity(
+                                name = name,
+                                type = type,
+                                iconName = obj.optString("iconName", "category"),
+                                colorHex = obj.optLong("colorHex", 0xFF00796BL),
+                                isDefault = obj.optBoolean("isDefault", false),
+                                isArchived = obj.optBoolean("isArchived", false)
+                            )
+                            val insertedId = categoryDao.insert(newCat)
+                            val created = newCat.copy(id = insertedId)
+                            existingCategoriesByNameAndType[key] = created
+                            if (backupId != -1L) categoryIdMap[backupId] = insertedId
+                        }
                     }
-                    val frequency = obj.getString("frequency")
-                    val key = "${title.trim().lowercase()}_${type}_${rawAmount}_$frequency"
+                }
 
-                    if (!existingRecurringKeys.contains(key)) {
-                        existingRecurringKeys.add(key)
+                // 3. Restore transactions (duplicate-safe signature matching)
+                fun txnSignature(
+                    type: String,
+                    amount: Long,
+                    dateMillis: Long,
+                    accountId: Long,
+                    categoryName: String,
+                    note: String,
+                    merchant: String
+                ): String {
+                    return "$type|$amount|$dateMillis|$accountId|${categoryName.trim().lowercase()}|${note.trim().lowercase()}|${merchant.trim().lowercase()}"
+                }
+
+                val existingSignatures = existingData.transactions.map {
+                    txnSignature(it.type, it.amount, it.dateMillis, it.accountId, it.categoryName, it.note, it.merchant)
+                }.toMutableSet()
+
+                var importedTxnCount = 0
+                var duplicateTxnCount = 0
+                val txnsToInsert = mutableListOf<TransactionEntity>()
+
+                if (root.has("transactions")) {
+                    val txnArray = root.getJSONArray("transactions")
+                    for (i in 0 until txnArray.length()) {
+                        val obj = txnArray.getJSONObject(i)
+                        val rawAmount = if (isV1Backup) {
+                            MoneyUtils.rupeesToPaise(obj.getDouble("amount"))
+                        } else {
+                            obj.getLong("amount")
+                        }
+
                         val backupAccId = obj.optLong("accountId", 1L)
                         val targetAccId = accountIdMap[backupAccId] ?: backupAccId
                         val backupCatId = if (obj.isNull("categoryId")) null else obj.getLong("categoryId")
                         val targetCatId = backupCatId?.let { categoryIdMap[it] ?: it }
+                        val backupToAccId = if (obj.isNull("toAccountId")) null else obj.getLong("toAccountId")
+                        val targetToAccId = backupToAccId?.let { accountIdMap[it] ?: it }
 
+                        val type = obj.getString("type")
+                        val dateMillis = obj.optLong("dateMillis", System.currentTimeMillis())
+                        val categoryName = obj.optString("categoryName", "General")
+                        val accountName = obj.optString("accountName", "Primary Account")
+                        val note = obj.optString("note", "")
+                        val merchant = obj.optString("merchant", "")
+
+                        val sig = txnSignature(type, rawAmount, dateMillis, targetAccId, categoryName, note, merchant)
+                        if (existingSignatures.contains(sig)) {
+                            duplicateTxnCount++
+                        } else {
+                            existingSignatures.add(sig)
+                            txnsToInsert.add(
+                                TransactionEntity(
+                                    type = type,
+                                    amount = rawAmount,
+                                    dateMillis = dateMillis,
+                                    categoryId = targetCatId,
+                                    categoryName = categoryName,
+                                    accountId = targetAccId,
+                                    accountName = accountName,
+                                    toAccountId = targetToAccId,
+                                    toAccountName = if (obj.isNull("toAccountName")) null else obj.getString("toAccountName"),
+                                    paymentMethod = obj.optString("paymentMethod", "UPI"),
+                                    note = note,
+                                    merchant = merchant,
+                                    tags = obj.optString("tags", ""),
+                                    createdAt = obj.optLong("createdAt", System.currentTimeMillis())
+                                )
+                            )
+                            importedTxnCount++
+                        }
+                    }
+                    if (txnsToInsert.isNotEmpty()) {
+                        transactionDao.insertAll(txnsToInsert)
+                    }
+                }
+
+                // 4. Restore budgets (duplicate-safe by name and period)
+                val existingBudgetKeys = existingData.budgets.map { "${it.name.trim().lowercase()}_${it.period}" }.toMutableSet()
+                if (root.has("budgets")) {
+                    val bArray = root.getJSONArray("budgets")
+                    val list = mutableListOf<BudgetEntity>()
+                    for (i in 0 until bArray.length()) {
+                        val obj = bArray.getJSONObject(i)
+                        val name = obj.getString("name")
+                        val period = obj.optString("period", "MONTHLY")
+                        val key = "${name.trim().lowercase()}_$period"
+
+                        if (!existingBudgetKeys.contains(key)) {
+                            existingBudgetKeys.add(key)
+                            val rawLimit = if (isV1Backup) {
+                                MoneyUtils.rupeesToPaise(obj.getDouble("amountLimit"))
+                            } else {
+                                obj.getLong("amountLimit")
+                            }
+                            val backupCatId = if (obj.isNull("categoryId")) null else obj.getLong("categoryId")
+                            val targetCatId = backupCatId?.let { categoryIdMap[it] ?: it }
+                            list.add(
+                                BudgetEntity(
+                                    name = name,
+                                    amountLimit = rawLimit,
+                                    categoryId = targetCatId,
+                                    categoryName = if (obj.isNull("categoryName")) null else obj.getString("categoryName"),
+                                    warningThresholdPercent = obj.optInt("warningThresholdPercent", 80),
+                                    period = period
+                                )
+                            )
+                        }
+                    }
+                    if (list.isNotEmpty()) budgetDao.insertAll(list)
+                }
+
+                // 5. Restore recurring (duplicate-safe by title, type, amount, frequency)
+                val existingRecurringKeys = existingData.recurring.map {
+                    "${it.title.trim().lowercase()}_${it.type}_${it.amount}_${it.frequency}"
+                }.toMutableSet()
+                if (root.has("recurring")) {
+                    val recArray = root.getJSONArray("recurring")
+                    val list = mutableListOf<RecurringTransactionEntity>()
+                    for (i in 0 until recArray.length()) {
+                        val obj = recArray.getJSONObject(i)
+                        val title = obj.getString("title")
+                        val type = obj.getString("type")
+                        val rawAmount = if (isV1Backup) {
+                            MoneyUtils.rupeesToPaise(obj.getDouble("amount"))
+                        } else {
+                            obj.getLong("amount")
+                        }
+                        val frequency = obj.getString("frequency")
+                        val key = "${title.trim().lowercase()}_${type}_${rawAmount}_$frequency"
+
+                        if (!existingRecurringKeys.contains(key)) {
+                            existingRecurringKeys.add(key)
+                            val backupAccId = obj.optLong("accountId", 1L)
+                            val targetAccId = accountIdMap[backupAccId] ?: backupAccId
+                            val backupCatId = if (obj.isNull("categoryId")) null else obj.getLong("categoryId")
+                            val targetCatId = backupCatId?.let { categoryIdMap[it] ?: it }
+
+                            list.add(
+                                RecurringTransactionEntity(
+                                    title = title,
+                                    type = type,
+                                    amount = rawAmount,
+                                    categoryId = targetCatId,
+                                    categoryName = obj.optString("categoryName", "General"),
+                                    accountId = targetAccId,
+                                    accountName = obj.optString("accountName", "Primary Account"),
+                                    frequency = frequency,
+                                    nextDueDateMillis = obj.optLong("nextDueDateMillis", System.currentTimeMillis()),
+                                    paymentMethod = obj.optString("paymentMethod", "UPI"),
+                                    note = obj.optString("note", ""),
+                                    isActive = obj.optBoolean("isActive", true)
+                                )
+                            )
+                        }
+                    }
+                    if (list.isNotEmpty()) recurringDao.insertAll(list)
+                }
+
+                // 6. Restore goals (duplicate-safe by name)
+                val existingGoalNames = existingData.goals.map { it.name.trim().lowercase() }.toMutableSet()
+                if (root.has("goals")) {
+                    val gArray = root.getJSONArray("goals")
+                    val list = mutableListOf<SavingsGoalEntity>()
+                    for (i in 0 until gArray.length()) {
+                        val obj = gArray.getJSONObject(i)
+                        val name = obj.getString("name")
+                        val key = name.trim().lowercase()
+
+                        if (!existingGoalNames.contains(key)) {
+                            existingGoalNames.add(key)
+                            val rawTarget = if (isV1Backup) {
+                                MoneyUtils.rupeesToPaise(obj.getDouble("targetAmount"))
+                            } else {
+                                obj.getLong("targetAmount")
+                            }
+                            val rawSaved = if (isV1Backup) {
+                                MoneyUtils.rupeesToPaise(obj.optDouble("savedAmount", 0.0))
+                            } else {
+                                obj.optLong("savedAmount", 0L)
+                            }
+                            list.add(
+                                SavingsGoalEntity(
+                                    name = name,
+                                    targetAmount = rawTarget,
+                                    savedAmount = rawSaved,
+                                    targetDateMillis = obj.optLong("targetDateMillis", System.currentTimeMillis()),
+                                    notes = obj.optString("notes", ""),
+                                    colorHex = obj.optLong("colorHex", 0xFF00897BL)
+                                )
+                            )
+                        }
+                    }
+                    if (list.isNotEmpty()) savingsGoalDao.insertAll(list)
+                }
+
+                // 7. Restore daily reviews (primary key dateString replaces safely)
+                if (root.has("reviews")) {
+                    val rArray = root.getJSONArray("reviews")
+                    val list = mutableListOf<DailyReviewEntity>()
+                    for (i in 0 until rArray.length()) {
+                        val obj = rArray.getJSONObject(i)
+                        val rawExp = if (isV1Backup) {
+                            MoneyUtils.rupeesToPaise(obj.optDouble("totalExpenseRecorded", 0.0))
+                        } else {
+                            obj.optLong("totalExpenseRecorded", 0L)
+                        }
+                        val rawInc = if (isV1Backup) {
+                            MoneyUtils.rupeesToPaise(obj.optDouble("totalIncomeRecorded", 0.0))
+                        } else {
+                            obj.optLong("totalIncomeRecorded", 0L)
+                        }
                         list.add(
-                            RecurringTransactionEntity(
-                                title = title,
-                                type = type,
-                                amount = rawAmount,
-                                categoryId = targetCatId,
-                                categoryName = obj.optString("categoryName", "General"),
-                                accountId = targetAccId,
-                                accountName = obj.optString("accountName", "Primary Account"),
-                                frequency = frequency,
-                                nextDueDateMillis = obj.optLong("nextDueDateMillis", System.currentTimeMillis()),
-                                paymentMethod = obj.optString("paymentMethod", "UPI"),
-                                note = obj.optString("note", ""),
-                                isActive = obj.optBoolean("isActive", true)
+                            DailyReviewEntity(
+                                dateString = obj.getString("dateString"),
+                                isCompleted = obj.optBoolean("isCompleted", true),
+                                reviewedAt = obj.optLong("reviewedAt", System.currentTimeMillis()),
+                                hadNoExpenses = obj.optBoolean("hadNoExpenses", false),
+                                totalExpenseRecorded = rawExp,
+                                totalIncomeRecorded = rawInc,
+                                notes = obj.optString("notes", "")
                             )
                         )
                     }
+                    if (list.isNotEmpty()) dailyReviewDao.insertAll(list)
                 }
-                if (list.isNotEmpty()) recurringDao.insertAll(list)
-            }
 
-            // 6. Restore goals (duplicate-safe by name)
-            val existingGoalNames = existingData.goals.map { it.name.trim().lowercase() }.toMutableSet()
-            if (root.has("goals")) {
-                val gArray = root.getJSONArray("goals")
-                val list = mutableListOf<SavingsGoalEntity>()
-                for (i in 0 until gArray.length()) {
-                    val obj = gArray.getJSONObject(i)
-                    val name = obj.getString("name")
-                    val key = name.trim().lowercase()
-
-                    if (!existingGoalNames.contains(key)) {
-                        existingGoalNames.add(key)
-                        val rawTarget = if (isV1Backup) {
-                            MoneyUtils.rupeesToPaise(obj.getDouble("targetAmount"))
-                        } else {
-                            obj.getLong("targetAmount")
-                        }
-                        val rawSaved = if (isV1Backup) {
-                            MoneyUtils.rupeesToPaise(obj.optDouble("savedAmount", 0.0))
-                        } else {
-                            obj.optLong("savedAmount", 0L)
-                        }
-                        list.add(
-                            SavingsGoalEntity(
-                                name = name,
-                                targetAmount = rawTarget,
-                                savedAmount = rawSaved,
-                                targetDateMillis = obj.optLong("targetDateMillis", System.currentTimeMillis()),
-                                notes = obj.optString("notes", ""),
-                                colorHex = obj.optLong("colorHex", 0xFF00897BL)
-                            )
-                        )
-                    }
+                if (duplicateTxnCount > 0) {
+                    "Restored successfully: $importedTxnCount new transactions imported ($duplicateTxnCount duplicates skipped)."
+                } else {
+                    "Restored successfully: $importedTxnCount transactions imported."
                 }
-                if (list.isNotEmpty()) savingsGoalDao.insertAll(list)
-            }
-
-            // 7. Restore daily reviews (primary key dateString replaces safely)
-            if (root.has("reviews")) {
-                val rArray = root.getJSONArray("reviews")
-                val list = mutableListOf<DailyReviewEntity>()
-                for (i in 0 until rArray.length()) {
-                    val obj = rArray.getJSONObject(i)
-                    val rawExp = if (isV1Backup) {
-                        MoneyUtils.rupeesToPaise(obj.optDouble("totalExpenseRecorded", 0.0))
-                    } else {
-                        obj.optLong("totalExpenseRecorded", 0L)
-                    }
-                    val rawInc = if (isV1Backup) {
-                        MoneyUtils.rupeesToPaise(obj.optDouble("totalIncomeRecorded", 0.0))
-                    } else {
-                        obj.optLong("totalIncomeRecorded", 0L)
-                    }
-                    list.add(
-                        DailyReviewEntity(
-                            dateString = obj.getString("dateString"),
-                            isCompleted = obj.optBoolean("isCompleted", true),
-                            reviewedAt = obj.optLong("reviewedAt", System.currentTimeMillis()),
-                            hadNoExpenses = obj.optBoolean("hadNoExpenses", false),
-                            totalExpenseRecorded = rawExp,
-                            totalIncomeRecorded = rawInc,
-                            notes = obj.optString("notes", "")
-                        )
-                    )
-                }
-                if (list.isNotEmpty()) dailyReviewDao.insertAll(list)
-            }
-
-            val msg = if (duplicateTxnCount > 0) {
-                "Restored successfully: $importedTxnCount new transactions imported ($duplicateTxnCount duplicates skipped)."
-            } else {
-                "Restored successfully: $importedTxnCount transactions imported."
             }
             Result.success(msg)
         } catch (e: Exception) {
