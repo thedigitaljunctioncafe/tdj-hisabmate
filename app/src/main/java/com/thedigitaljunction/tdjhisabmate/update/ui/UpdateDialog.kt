@@ -181,6 +181,13 @@ fun UpdateDialog(
                         )
                     }
                 }
+
+                // Privacy and installation reassurance note
+                Text(
+                    text = "🔒 Updating will keep all your local data and transactions safe. When installing, follow Android's prompt if asked to allow installation from your browser or downloads.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         },
         confirmButton = {
