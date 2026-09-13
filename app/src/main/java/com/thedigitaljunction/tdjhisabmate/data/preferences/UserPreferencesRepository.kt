@@ -26,7 +26,8 @@ data class UserPreferences(
     val isPinEnabled: Boolean = false,
     val themeMode: String = "SYSTEM", // SYSTEM, LIGHT, DARK
     val lastUpdateCheckTimestamp: Long = 0L,
-    val dismissedUpdateVersion: String = ""
+    val dismissedUpdateVersion: String = "",
+    val hasRequestedNotificationPermission: Boolean = false
 )
 
 class UserPreferencesRepository(private val context: Context) {
@@ -45,6 +46,7 @@ class UserPreferencesRepository(private val context: Context) {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val LAST_UPDATE_CHECK_TIMESTAMP = androidx.datastore.preferences.core.longPreferencesKey("last_update_check_timestamp")
         val DISMISSED_UPDATE_VERSION = stringPreferencesKey("dismissed_update_version")
+        val HAS_REQUESTED_NOTIFICATION_PERMISSION = booleanPreferencesKey("has_requested_notification_permission")
     }
 
     val userPreferencesFlow: Flow<UserPreferences> = context.dataStore.data.map { preferences ->
@@ -61,7 +63,8 @@ class UserPreferencesRepository(private val context: Context) {
             isPinEnabled = preferences[Keys.IS_PIN_ENABLED] ?: false,
             themeMode = preferences[Keys.THEME_MODE] ?: "SYSTEM",
             lastUpdateCheckTimestamp = preferences[Keys.LAST_UPDATE_CHECK_TIMESTAMP] ?: 0L,
-            dismissedUpdateVersion = preferences[Keys.DISMISSED_UPDATE_VERSION] ?: ""
+            dismissedUpdateVersion = preferences[Keys.DISMISSED_UPDATE_VERSION] ?: "",
+            hasRequestedNotificationPermission = preferences[Keys.HAS_REQUESTED_NOTIFICATION_PERMISSION] ?: false
         )
     }
 
@@ -113,5 +116,9 @@ class UserPreferencesRepository(private val context: Context) {
 
     suspend fun setDismissedUpdateVersion(version: String) {
         context.dataStore.edit { it[Keys.DISMISSED_UPDATE_VERSION] = version }
+    }
+
+    suspend fun setHasRequestedNotificationPermission(requested: Boolean) {
+        context.dataStore.edit { it[Keys.HAS_REQUESTED_NOTIFICATION_PERMISSION] = requested }
     }
 }

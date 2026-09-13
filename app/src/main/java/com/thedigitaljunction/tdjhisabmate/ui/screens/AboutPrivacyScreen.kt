@@ -126,7 +126,7 @@ fun AboutPrivacyScreen(
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
                     Text(
-                        text = "Version 1.0.0 (Public Release)",
+                        text = "Version ${com.thedigitaljunction.tdjhisabmate.BuildConfig.VERSION_NAME} (Public Release)",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
                     )

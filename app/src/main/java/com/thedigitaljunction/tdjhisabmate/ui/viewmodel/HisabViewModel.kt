@@ -577,6 +577,10 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { preferencesRepository.setThemeMode(themeMode) }
     }
 
+    fun setHasRequestedNotificationPermission(requested: Boolean) {
+        viewModelScope.launch { preferencesRepository.setHasRequestedNotificationPermission(requested) }
+    }
+
     // ----------------- FEEDBACK & FEATURE REQUESTS -----------------
     fun submitFeedback(rating: Int, category: String, comments: String, contactInfo: String, onComplete: () -> Unit) {
         viewModelScope.launch {

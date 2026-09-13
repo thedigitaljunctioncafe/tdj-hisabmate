@@ -1,5 +1,7 @@
 package com.thedigitaljunction.tdjhisabmate.ui.screens
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,8 +44,13 @@ fun PinLockScreen(
     onMigratePin: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var enteredPin by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
+
+    BackHandler {
+        (context as? Activity)?.finish()
+    }
 
     Column(
         modifier = modifier

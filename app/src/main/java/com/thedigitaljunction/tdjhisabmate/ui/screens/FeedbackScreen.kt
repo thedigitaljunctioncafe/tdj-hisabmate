@@ -61,16 +61,21 @@ private fun openEmailComposer(
     subject: String,
     body: String
 ) {
-    val intent = Intent(Intent.ACTION_SENDTO).apply {
-        data = Uri.parse("mailto:$DEVELOPER_EMAIL")
+    val encodedSubject = Uri.encode(subject)
+    val encodedBody = Uri.encode(body)
+    val uriString = "mailto:$DEVELOPER_EMAIL?subject=$encodedSubject&body=$encodedBody"
+    val mailUri = Uri.parse(uriString)
+
+    val intent = Intent(Intent.ACTION_SENDTO, mailUri).apply {
+        putExtra(Intent.EXTRA_EMAIL, arrayOf(DEVELOPER_EMAIL))
         putExtra(Intent.EXTRA_SUBJECT, subject)
         putExtra(Intent.EXTRA_TEXT, body)
     }
     try {
         context.startActivity(intent)
-        Toast.makeText(context, "Opening email app to send to The Digital Junction...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "Opening email app to review and send...", Toast.LENGTH_SHORT).show()
     } catch (_: Exception) {
-        Toast.makeText(context, "No email client found. You can email us at $DEVELOPER_EMAIL", Toast.LENGTH_LONG).show()
+        Toast.makeText(context, "No email application found. You can email us at $DEVELOPER_EMAIL", Toast.LENGTH_LONG).show()
     }
 }
 
@@ -185,57 +190,39 @@ fun FeedbackScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Button(
-                            onClick = {
-                                viewModel.submitFeedback(ratingStars, selectedCategory, comments, contactInfo) {
-                                    Toast.makeText(context, "Feedback saved locally on this device.", Toast.LENGTH_SHORT).show()
-                                    comments = ""
-                                    contactInfo = ""
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("submit_feedback_btn"),
-                            enabled = comments.isNotBlank()
-                        ) {
-                            Icon(Icons.Default.Save, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Save Locally")
-                        }
-
-                        OutlinedButton(
-                            onClick = {
-                                val emailBody = buildString {
-                                    appendLine("Rating: $ratingStars/5 Stars")
-                                    appendLine("Category: $selectedCategory")
-                                    if (contactInfo.isNotBlank()) {
-                                        appendLine("Contact: $contactInfo")
-                                    }
-                                    appendLine("App: TDJ HisabMate v1.0.1")
+                    Button(
+                        onClick = {
+                            val emailBody = buildString {
+                                appendLine("TDJ HisabMate Feedback")
+                                appendLine()
+                                appendLine("Rating: $ratingStars/5 Stars")
+                                appendLine("Category: $selectedCategory")
+                                appendLine()
+                                appendLine("Feedback:")
+                                appendLine(comments.trim())
+                                if (contactInfo.isNotBlank()) {
                                     appendLine()
-                                    appendLine("User Feedback:")
-                                    appendLine(comments.trim())
+                                    appendLine("Contact:")
+                                    appendLine(contactInfo.trim())
                                 }
-                                viewModel.submitFeedback(ratingStars, selectedCategory, comments, contactInfo) {}
-                                openEmailComposer(
-                                    context = context,
-                                    subject = "TDJ HisabMate Feedback - $selectedCategory ($ratingStars Stars)",
-                                    body = emailBody
-                                )
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("send_email_feedback_btn"),
-                            enabled = comments.isNotBlank()
-                        ) {
-                            Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Send to TDJ")
-                        }
+                                appendLine()
+                                appendLine("App Version:")
+                                appendLine("1.0.2")
+                            }
+                            openEmailComposer(
+                                context = context,
+                                subject = "TDJ HisabMate Feedback — $selectedCategory ($ratingStars/5)",
+                                body = emailBody
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("submit_feedback_btn"),
+                        enabled = comments.isNotBlank()
+                    ) {
+                        Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Send via Email")
                     }
                 }
             }
@@ -305,10 +292,24 @@ fun FeedbackScreen(
 
                         IconButton(
                             onClick = {
+                                val emailBody = buildString {
+                                    appendLine("TDJ HisabMate Feature Suggestion")
+                                    appendLine()
+                                    appendLine("Suggestion:")
+                                    appendLine(req.title)
+                                    if (req.description.isNotBlank()) {
+                                        appendLine()
+                                        appendLine("Additional Details:")
+                                        appendLine(req.description)
+                                    }
+                                    appendLine()
+                                    appendLine("App Version:")
+                                    appendLine("1.0.2")
+                                }
                                 openEmailComposer(
                                     context = context,
-                                    subject = "TDJ HisabMate Feature Suggestion: ${req.title}",
-                                    body = "Feature Title: ${req.title}\n\nDescription:\n${req.description}\n\nVotes on device: ${req.votes}\nApp: TDJ HisabMate v1.0.1"
+                                    subject = "TDJ HisabMate Feature Suggestion — ${req.title}",
+                                    body = emailBody
                                 )
                             }
                         ) {
@@ -356,40 +357,40 @@ fun FeedbackScreen(
                 }
             },
             confirmButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(
-                        onClick = {
-                            if (featureTitle.isNotBlank()) {
-                                viewModel.submitFeatureRequest(featureTitle.trim(), featureDesc.trim()) {
-                                    Toast.makeText(context, "Proposal saved locally!", Toast.LENGTH_SHORT).show()
-                                    showNewFeatureDialog = false
+                Button(
+                    onClick = {
+                        if (featureTitle.isNotBlank()) {
+                            val title = featureTitle.trim()
+                            val desc = featureDesc.trim()
+                            viewModel.submitFeatureRequest(title, desc) {}
+                            showNewFeatureDialog = false
+                            val emailBody = buildString {
+                                appendLine("TDJ HisabMate Feature Suggestion")
+                                appendLine()
+                                appendLine("Suggestion:")
+                                appendLine(title)
+                                if (desc.isNotBlank()) {
+                                    appendLine()
+                                    appendLine("Additional Details:")
+                                    appendLine(desc)
                                 }
+                                appendLine()
+                                appendLine("App Version:")
+                                appendLine("1.0.2")
                             }
-                        },
-                        enabled = featureTitle.isNotBlank()
-                    ) {
-                        Text("Save Locally")
-                    }
-
-                    Button(
-                        onClick = {
-                            if (featureTitle.isNotBlank()) {
-                                val title = featureTitle.trim()
-                                val desc = featureDesc.trim()
-                                viewModel.submitFeatureRequest(title, desc) {
-                                    showNewFeatureDialog = false
-                                }
-                                openEmailComposer(
-                                    context = context,
-                                    subject = "TDJ HisabMate Feature Suggestion: $title",
-                                    body = "Feature Title: $title\n\nDescription:\n$desc\n\nApp: TDJ HisabMate v1.0.1"
-                                )
-                            }
-                        },
-                        enabled = featureTitle.isNotBlank()
-                    ) {
-                        Text("Email to TDJ")
-                    }
+                            openEmailComposer(
+                                context = context,
+                                subject = "TDJ HisabMate Feature Suggestion — $title",
+                                body = emailBody
+                            )
+                        }
+                    },
+                    enabled = featureTitle.isNotBlank(),
+                    modifier = Modifier.testTag("send_feature_suggestion_btn")
+                ) {
+                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Send via Email")
                 }
             },
             dismissButton = {
