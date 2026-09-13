@@ -22,11 +22,23 @@ android {
   signingConfigs {
     create("release") {
       val keystorePath = System.getenv("KEYSTORE_PATH")
+        ?: System.getenv("TDJ_KEYSTORE_PATH")
+        ?: (project.findProperty("KEYSTORE_PATH") as? String)
+        ?: (project.findProperty("TDJ_KEYSTORE_PATH") as? String)
       if (!keystorePath.isNullOrBlank() && file(keystorePath).exists()) {
         storeFile = file(keystorePath)
         storePassword = System.getenv("STORE_PASSWORD")
-        keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
+          ?: System.getenv("TDJ_KEYSTORE_PASSWORD")
+          ?: (project.findProperty("STORE_PASSWORD") as? String)
+          ?: (project.findProperty("TDJ_KEYSTORE_PASSWORD") as? String)
+        keyAlias = System.getenv("KEY_ALIAS")
+          ?: System.getenv("TDJ_KEY_ALIAS")
+          ?: (project.findProperty("KEY_ALIAS") as? String)
+          ?: (project.findProperty("TDJ_KEY_ALIAS") as? String)
         keyPassword = System.getenv("KEY_PASSWORD")
+          ?: System.getenv("TDJ_KEY_PASSWORD")
+          ?: (project.findProperty("KEY_PASSWORD") as? String)
+          ?: (project.findProperty("TDJ_KEY_PASSWORD") as? String)
       }
     }
   }
