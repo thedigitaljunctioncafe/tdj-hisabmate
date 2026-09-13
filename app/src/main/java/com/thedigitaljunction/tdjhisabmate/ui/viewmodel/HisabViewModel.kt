@@ -25,6 +25,8 @@ import com.thedigitaljunction.tdjhisabmate.data.repository.DashboardSummary
 import com.thedigitaljunction.tdjhisabmate.data.repository.HisabRepository
 import com.thedigitaljunction.tdjhisabmate.hisabguard.HisabGuardEngine
 import com.thedigitaljunction.tdjhisabmate.hisabguard.HisabGuardStatus
+import com.thedigitaljunction.tdjhisabmate.notification.HisabNotificationHelper
+import com.thedigitaljunction.tdjhisabmate.notification.HisabReminderScheduler
 import com.thedigitaljunction.tdjhisabmate.ui.util.DateUtils
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
 import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
@@ -491,6 +493,12 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateGoal(goal: SavingsGoalEntity) {
+        viewModelScope.launch {
+            repository.updateGoal(goal)
+        }
+    }
+
     fun deleteGoal(goal: SavingsGoalEntity) {
         viewModelScope.launch { repository.deleteGoal(goal) }
     }
@@ -506,6 +514,17 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setCompletedSetup(completed: Boolean) {
         viewModelScope.launch { preferencesRepository.setCompletedSetup(completed) }
+    }
+
+    fun setDailyReviewTime(hour: Int, minute: Int) {
+        viewModelScope.launch {
+            preferencesRepository.setDailyReviewTime(hour, minute)
+            if (preferences.value.isHisabGuardEnabled) {
+                HisabNotificationHelper.createNotificationChannel(getApplication())
+                HisabReminderScheduler.scheduleDailyReminder(getApplication(), hour, minute)
+            }
+            refreshGuardStatus()
+        }
     }
 
     fun setPin(pin: String, enabled: Boolean) {
@@ -525,6 +544,17 @@ class HisabViewModel(application: Application) : AndroidViewModel(application) {
     fun setHisabGuardEnabled(enabled: Boolean) {
         viewModelScope.launch {
             preferencesRepository.setHisabGuardEnabled(enabled)
+            if (enabled) {
+                val pref = preferences.value
+                HisabNotificationHelper.createNotificationChannel(getApplication())
+                HisabReminderScheduler.scheduleDailyReminder(
+                    getApplication(),
+                    pref.dailyReviewHour,
+                    pref.dailyReviewMinute
+                )
+            } else {
+                HisabReminderScheduler.cancelDailyReminder(getApplication())
+            }
             refreshGuardStatus()
         }
     }

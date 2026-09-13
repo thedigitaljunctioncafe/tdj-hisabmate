@@ -8,6 +8,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.thedigitaljunction.tdjhisabmate.notification.HisabNotificationHelper
 import com.thedigitaljunction.tdjhisabmate.ui.navigation.MainApp
 import com.thedigitaljunction.tdjhisabmate.ui.theme.TDJHisabMateTheme
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        HisabNotificationHelper.createNotificationChannel(this)
         enableEdgeToEdge()
         setContent {
             val prefs by viewModel.preferences.collectAsState()

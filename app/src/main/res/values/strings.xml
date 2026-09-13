@@ -175,5 +175,5 @@
     <!-- Privacy & About -->
     <string name="privacy_title">Privacy &amp; Local-First Policy</string>
     <string name="about_title">About TDJ HisabMate</string>
-    <string name="app_version">Version 1.0.0</string>
+    <string name="app_version">Version 1.0.1</string>
 </resources>

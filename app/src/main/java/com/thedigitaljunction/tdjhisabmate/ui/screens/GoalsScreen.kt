@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.AlertDialog
@@ -70,6 +71,7 @@ fun GoalsScreen(
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
 
     var showAddDialog by remember { mutableStateOf(false) }
+    var goalToEdit by remember { mutableStateOf<SavingsGoalEntity?>(null) }
     var goalForFundsUpdate by remember { mutableStateOf<SavingsGoalEntity?>(null) }
     var goalToDelete by remember { mutableStateOf<SavingsGoalEntity?>(null) }
 
@@ -169,9 +171,29 @@ fun GoalsScreen(
                                     }
                                 }
 
-                                IconButton(onClick = { goalToDelete = goal }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.outline)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(
+                                        onClick = { goalToEdit = goal },
+                                        modifier = Modifier.testTag("edit_goal_${goal.id}")
+                                    ) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit Goal", tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                    IconButton(
+                                        onClick = { goalToDelete = goal },
+                                        modifier = Modifier.testTag("delete_goal_${goal.id}")
+                                    ) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.outline)
+                                    }
                                 }
+                            }
+
+                            if (goal.notes.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = goal.notes,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                                )
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -212,7 +234,8 @@ fun GoalsScreen(
                             ) {
                                 OutlinedButton(
                                     onClick = { goalForFundsUpdate = goal },
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.testTag("update_funds_btn_${goal.id}")
                                 ) {
                                     Text("Add / Withdraw Funds")
                                 }
@@ -231,6 +254,18 @@ fun GoalsScreen(
             onConfirm = { name, targetPaise, initialPaise, targetDate, notes ->
                 viewModel.addGoal(name, targetPaise, initialPaise, targetDate, notes)
                 showAddDialog = false
+            }
+        )
+    }
+
+    goalToEdit?.let { goal ->
+        EditGoalDialog(
+            goal = goal,
+            currency = preferences.currency,
+            onDismiss = { goalToEdit = null },
+            onConfirm = { updated ->
+                viewModel.updateGoal(updated)
+                goalToEdit = null
             }
         )
     }
@@ -410,6 +445,121 @@ fun AddGoalDialog(
                 modifier = Modifier.testTag("confirm_add_goal_btn")
             ) {
                 Text("Create Goal")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun EditGoalDialog(
+    goal: SavingsGoalEntity,
+    currency: String,
+    onDismiss: () -> Unit,
+    onConfirm: (updatedGoal: SavingsGoalEntity) -> Unit
+) {
+    val context = LocalContext.current
+    var name by remember { mutableStateOf(goal.name) }
+    var targetText by remember {
+        val whole = goal.targetAmount / 100
+        val frac = goal.targetAmount % 100
+        mutableStateOf(if (frac == 0L) whole.toString() else String.format(java.util.Locale.US, "%.2f", goal.targetAmount / 100.0))
+    }
+    var targetDateMillis by remember { mutableLongStateOf(goal.targetDateMillis) }
+    var notes by remember { mutableStateOf(goal.notes) }
+
+    val calendar = remember { Calendar.getInstance().apply { timeInMillis = goal.targetDateMillis } }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Savings Goal") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Goal Name") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_goal_name_input")
+                )
+
+                OutlinedTextField(
+                    value = targetText,
+                    onValueChange = { targetText = it },
+                    label = { Text("Target Amount ($currency)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("edit_goal_target_input")
+                )
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            DatePickerDialog(
+                                context,
+                                { _, y, m, d ->
+                                    calendar.set(y, m, d)
+                                    targetDateMillis = calendar.timeInMillis
+                                },
+                                calendar.get(Calendar.YEAR),
+                                calendar.get(Calendar.MONTH),
+                                calendar.get(Calendar.DAY_OF_MONTH)
+                            ).show()
+                        },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Target Date: ${Formatters.formatDate(targetDateMillis)}", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text("Notes (Optional)") },
+                    placeholder = { Text("Details or motivation...") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    text = "Current Saved: ${Formatters.formatMoney(goal.savedAmount, currency, true)} (Preserved)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val targetPaise = MoneyUtils.parseRupeesToPaise(targetText)
+                    if (name.isNotBlank() && targetPaise > 0L) {
+                        onConfirm(
+                            goal.copy(
+                                name = name.trim(),
+                                targetAmount = targetPaise,
+                                targetDateMillis = targetDateMillis,
+                                notes = notes.trim()
+                            )
+                        )
+                    }
+                },
+                enabled = name.isNotBlank() && MoneyUtils.parseRupeesToPaise(targetText) > 0L,
+                modifier = Modifier.testTag("confirm_edit_goal_btn")
+            ) {
+                Text("Save Changes")
             }
         },
         dismissButton = {
