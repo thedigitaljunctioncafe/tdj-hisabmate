@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -52,7 +53,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.data.model.BudgetEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.CategoryEntity
 import com.thedigitaljunction.tdjhisabmate.data.repository.BudgetWithProgress
+import com.thedigitaljunction.tdjhisabmate.ui.theme.AmberAccent
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
@@ -75,7 +78,8 @@ fun BudgetsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = EmeraldPrimary,
+                contentColor = Color.White,
                 modifier = Modifier.testTag("add_budget_fab")
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Budget")
@@ -95,7 +99,7 @@ fun BudgetsScreen(
                         text = "Monthly Budgets",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Track your monthly limits and stay in control of spending",
@@ -109,13 +113,13 @@ fun BudgetsScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(28.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -123,8 +127,12 @@ fun BudgetsScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = { showAddDialog = true }) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Button(
+                                onClick = { showAddDialog = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                            ) {
                                 Text("Create Your First Budget")
                             }
                         }
@@ -166,7 +174,7 @@ fun BudgetsScreen(
                         budgetToDelete = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = CoralExpense)
                 }
             },
             dismissButton = {
@@ -188,11 +196,11 @@ fun BudgetItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("budget_item_${item.budget.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -223,16 +231,17 @@ fun BudgetItemCard(
                 progress = { item.percentUsed.coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(10.dp)
+                    .height(8.dp)
                     .clip(CircleShape),
                 color = when {
                     item.isOverBudget -> CoralExpense
-                    item.isNearWarning -> Color(0xFFFFA000)
+                    item.isNearWarning -> AmberAccent
                     else -> MintSuccess
-                }
+                },
+                trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -295,32 +304,42 @@ fun AddBudgetDialog(
     var limitText by remember { mutableStateOf("") }
     var selectedCatId by remember { mutableStateOf<Long?>(null) }
     var selectedCatName by remember { mutableStateOf<String?>(null) }
+    var errorText by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Create Monthly Budget") },
+        title = { Text("Create Monthly Budget", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it
+                        errorText = null
+                    },
                     label = { Text("Budget Name") },
                     placeholder = { Text("e.g. Total Monthly, Groceries, Dining") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().testTag("budget_name_input")
                 )
 
                 OutlinedTextField(
                     value = limitText,
-                    onValueChange = { limitText = it },
+                    onValueChange = {
+                        limitText = it
+                        errorText = null
+                    },
                     label = { Text("Monthly Limit ($currency)") },
                     placeholder = { Text("e.g. 10000") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().testTag("budget_limit_input")
                 )
 
-                Text("Category (Optional - leave empty for overall budget):", style = MaterialTheme.typography.labelSmall)
+                Text("Category (Optional - select for category-specific budget):", style = MaterialTheme.typography.bodySmall)
+
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     item {
                         FilterChip(
@@ -329,7 +348,8 @@ fun AddBudgetDialog(
                                 selectedCatId = null
                                 selectedCatName = null
                             },
-                            label = { Text("Overall Budget") }
+                            shape = RoundedCornerShape(12.dp),
+                            label = { Text("Overall (All Categories)") }
                         )
                     }
                     items(categories) { cat ->
@@ -339,24 +359,35 @@ fun AddBudgetDialog(
                                 selectedCatId = cat.id
                                 selectedCatName = cat.name
                             },
+                            shape = RoundedCornerShape(12.dp),
                             label = { Text(cat.name) }
                         )
                     }
+                }
+
+                if (errorText != null) {
+                    Text(text = errorText ?: "", color = CoralExpense, style = MaterialTheme.typography.bodySmall)
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val limitPaise = MoneyUtils.parseRupeesToPaise(limitText)
-                    if (name.isNotBlank() && limitPaise > 0L) {
-                        onConfirm(name, limitPaise, selectedCatId, selectedCatName)
+                    if (name.isBlank()) {
+                        errorText = "Please enter a budget name."
+                        return@Button
                     }
+                    val limitPaise = MoneyUtils.parseRupeesToPaise(limitText)
+                    if (limitPaise <= 0L) {
+                        errorText = "Please enter a valid positive amount."
+                        return@Button
+                    }
+                    onConfirm(name.trim(), limitPaise, selectedCatId, selectedCatName)
                 },
-                enabled = name.isNotBlank() && MoneyUtils.parseRupeesToPaise(limitText) > 0L,
-                modifier = Modifier.testTag("confirm_add_budget_btn")
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text("Create Budget")
+                Text("Save Budget")
             }
         },
         dismissButton = {

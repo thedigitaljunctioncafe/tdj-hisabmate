@@ -1,6 +1,8 @@
 package com.thedigitaljunction.tdjhisabmate.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -49,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +62,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.data.model.AccountEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.AccountType
 import com.thedigitaljunction.tdjhisabmate.data.repository.AccountWithBalance
+import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldDark
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldHero
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
@@ -81,7 +90,8 @@ fun AccountsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = EmeraldPrimary,
+                contentColor = Color.White,
                 modifier = Modifier.testTag("add_account_fab")
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Account")
@@ -99,28 +109,52 @@ fun AccountsScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = EmeraldDark),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = "Total Combined Net Worth",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = Formatters.formatMoney(totalNetWorth, preferences.currency),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "${accountsWithBalances.size} Active Accounts & Wallets",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        Color(0xFF064E3B),
+                                        Color(0xFF0B6E4F)
+                                    )
+                                )
+                            )
+                            .padding(20.dp)
+                    ) {
+                        Column {
+                            Text(
+                                text = "Total Combined Net Worth",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = Color.White.copy(alpha = 0.8f)
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = Formatters.formatMoney(totalNetWorth, preferences.currency),
+                                style = MaterialTheme.typography.displayMedium,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(MintSuccess)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "${accountsWithBalances.size} Active Accounts & Wallets",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.White.copy(alpha = 0.85f)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -129,7 +163,8 @@ fun AccountsScreen(
                 Text(
                     text = "Your Accounts & Wallets",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -137,13 +172,13 @@ fun AccountsScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(28.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -151,8 +186,12 @@ fun AccountsScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = { showAddDialog = true }) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Button(
+                                onClick = { showAddDialog = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                            ) {
                                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text("Add First Account")
@@ -181,8 +220,8 @@ fun AccountsScreen(
         AddAccountDialog(
             currency = preferences.currency,
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, type, initialBalPaise, colorHex ->
-                viewModel.addAccount(name, type, initialBalPaise, colorHex)
+            onConfirm = { name, type, initialBal, colorHex ->
+                viewModel.addAccount(name, type, initialBal, colorHex)
                 showAddDialog = false
             }
         )
@@ -203,21 +242,21 @@ fun AccountItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("account_item_${item.account.id}"),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(Color(item.account.colorHex).copy(alpha = 0.2f)),
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(item.account.colorHex).copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -233,12 +272,12 @@ fun AccountItemCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.account.name,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
@@ -253,7 +292,7 @@ fun AccountItemCard(
                     text = Formatters.formatMoney(item.currentBalance, currency),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (item.currentBalance >= 0) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error
+                    color = if (item.currentBalance >= 0) MaterialTheme.colorScheme.onSurface else CoralExpense
                 )
                 Text(
                     text = "Initial: ${Formatters.formatMoney(item.account.initialBalance, currency, true)}",
@@ -271,7 +310,7 @@ fun AccountItemCard(
                 Icon(
                     Icons.Default.Edit,
                     contentDescription = "Edit Account",
-                    tint = MaterialTheme.colorScheme.outline,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -282,8 +321,8 @@ fun AccountItemCard(
             ) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Remove Account",
-                    tint = MaterialTheme.colorScheme.outline,
+                    contentDescription = "Delete Account",
+                    tint = CoralExpense,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -305,16 +344,16 @@ fun AccountItemCard(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Remove Account") },
-            text = { Text("Are you sure you want to remove '${item.account.name}'? If it has recorded transactions, it will be safely archived without deleting past transaction records.") },
+            title = { Text("Delete Account") },
+            text = { Text("Are you sure you want to delete account \"${item.account.name}\"? Its associated transactions will be removed.") },
             confirmButton = {
-                Button(
+                TextButton(
                     onClick = {
                         onDelete()
                         showDeleteConfirm = false
                     }
                 ) {
-                    Text("Remove")
+                    Text("Delete", color = CoralExpense)
                 }
             },
             dismissButton = {
@@ -327,40 +366,56 @@ fun AccountItemCard(
 }
 
 @Composable
-fun EditAccountDialog(
-    account: AccountEntity,
+fun AddAccountDialog(
     currency: String,
     onDismiss: () -> Unit,
-    onConfirm: (AccountEntity) -> Unit
+    onConfirm: (name: String, type: String, initialBal: Long, colorHex: Long) -> Unit
 ) {
-    var name by remember { mutableStateOf(account.name) }
-    var selectedType by remember { mutableStateOf(account.type) }
-    var initialBalanceText by remember {
-        val rup = MoneyUtils.paiseToRupees(account.initialBalance)
-        mutableStateOf(if (rup % 1.0 == 0.0) rup.toLong().toString() else rup.toString())
-    }
+    var name by remember { mutableStateOf("") }
+    var selectedType by remember { mutableStateOf(AccountType.BANK.name) }
+    var initialBalanceText by remember { mutableStateOf("") }
+    var selectedColor by remember { mutableLongStateOf(0xFF0B6E4F) }
+    var errorText by remember { mutableStateOf<String?>(null) }
+
+    val presetColors = listOf(
+        0xFF0B6E4F, 0xFF0284C7, 0xFF7C3AED, 0xFFEA580C,
+        0xFFDB2777, 0xFFD97706, 0xFF0D8050, 0xFF475569
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Account") },
+        title = { Text("Add Account or Wallet", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Account Name") },
+                    onValueChange = {
+                        name = it
+                        errorText = null
+                    },
+                    label = { Text("Account Name (e.g. HDFC Bank, Cash Wallet)") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("account_name_input")
                 )
 
                 Text("Account Type", style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val types = listOf(AccountType.BANK.name, AccountType.CASH.name, AccountType.UPI.name, AccountType.CREDIT_CARD.name, AccountType.WALLET.name)
-                    items(types) { t ->
+                    val types = listOf(
+                        AccountType.BANK.name,
+                        AccountType.CASH.name,
+                        AccountType.UPI.name,
+                        AccountType.WALLET.name,
+                        AccountType.CREDIT_CARD.name
+                    )
+                    items(types) { type ->
                         FilterChip(
-                            selected = selectedType == t,
-                            onClick = { selectedType = t },
-                            label = { Text(t) }
+                            selected = selectedType == type,
+                            onClick = { selectedType = type },
+                            shape = RoundedCornerShape(12.dp),
+                            label = { Text(type.replace("_", " ")) }
                         )
                     }
                 }
@@ -368,24 +423,52 @@ fun EditAccountDialog(
                 OutlinedTextField(
                     value = initialBalanceText,
                     onValueChange = { initialBalanceText = it },
-                    label = { Text("Opening Balance ($currency)") },
+                    label = { Text("Initial Balance ($currency)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("account_initial_balance_input")
                 )
+
+                Text("Color Accent", style = MaterialTheme.typography.labelMedium)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(presetColors) { colorValue ->
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(colorValue))
+                                .clickable { selectedColor = colorValue }
+                                .then(
+                                    if (selectedColor == colorValue) {
+                                        Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                    } else Modifier
+                                )
+                        )
+                    }
+                }
+
+                if (errorText != null) {
+                    Text(text = errorText ?: "", color = CoralExpense, style = MaterialTheme.typography.bodySmall)
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (name.isNotBlank()) {
-                        val balPaise = MoneyUtils.parseRupeesToPaise(initialBalanceText)
-                        onConfirm(account.copy(name = name.trim(), type = selectedType, initialBalance = balPaise))
+                    if (name.isBlank()) {
+                        errorText = "Please enter an account name."
+                        return@Button
                     }
+                    val balancePaise = MoneyUtils.parseRupeesToPaise(initialBalanceText)
+                    onConfirm(name.trim(), selectedType, balancePaise, selectedColor)
                 },
-                enabled = name.isNotBlank()
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text("Save Changes")
+                Text("Save")
             }
         },
         dismissButton = {
@@ -397,65 +480,100 @@ fun EditAccountDialog(
 }
 
 @Composable
-fun AddAccountDialog(
+fun EditAccountDialog(
+    account: AccountEntity,
     currency: String,
     onDismiss: () -> Unit,
-    onConfirm: (name: String, type: String, initialBalancePaise: Long, colorHex: Long) -> Unit
+    onConfirm: (AccountEntity) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var selectedType by remember { mutableStateOf(AccountType.BANK.name) }
-    var initialBalanceText by remember { mutableStateOf("") }
-    var selectedColor by remember { mutableLongStateOf(0xFF00695CL) }
+    var name by remember { mutableStateOf(account.name) }
+    var selectedType by remember { mutableStateOf(account.type) }
+    var selectedColor by remember { mutableLongStateOf(account.colorHex) }
+    var errorText by remember { mutableStateOf<String?>(null) }
+
+    val presetColors = listOf(
+        0xFF0B6E4F, 0xFF0284C7, 0xFF7C3AED, 0xFFEA580C,
+        0xFFDB2777, 0xFFD97706, 0xFF0D8050, 0xFF475569
+    )
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add New Account / Wallet") },
+        title = { Text("Edit Account", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = {
+                        name = it
+                        errorText = null
+                    },
                     label = { Text("Account Name") },
-                    placeholder = { Text("e.g. HDFC Bank, Cash, Paytm") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("new_account_name_input")
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Text("Account Type", style = MaterialTheme.typography.labelMedium)
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val types = listOf(AccountType.BANK.name, AccountType.CASH.name, AccountType.UPI.name, AccountType.CREDIT_CARD.name, AccountType.WALLET.name)
-                    items(types) { t ->
+                    val types = listOf(
+                        AccountType.BANK.name,
+                        AccountType.CASH.name,
+                        AccountType.UPI.name,
+                        AccountType.WALLET.name,
+                        AccountType.CREDIT_CARD.name
+                    )
+                    items(types) { type ->
                         FilterChip(
-                            selected = selectedType == t,
-                            onClick = { selectedType = t },
-                            label = { Text(t) }
+                            selected = selectedType == type,
+                            onClick = { selectedType = type },
+                            shape = RoundedCornerShape(12.dp),
+                            label = { Text(type.replace("_", " ")) }
                         )
                     }
                 }
 
-                OutlinedTextField(
-                    value = initialBalanceText,
-                    onValueChange = { initialBalanceText = it },
-                    label = { Text("Opening Balance ($currency)") },
-                    placeholder = { Text("0.00") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().testTag("new_account_balance_input")
-                )
+                Text("Color Accent", style = MaterialTheme.typography.labelMedium)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(presetColors) { colorValue ->
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(colorValue))
+                                .clickable { selectedColor = colorValue }
+                                .then(
+                                    if (selectedColor == colorValue) {
+                                        Modifier.border(2.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                                    } else Modifier
+                                )
+                        )
+                    }
+                }
+
+                if (errorText != null) {
+                    Text(text = errorText ?: "", color = CoralExpense, style = MaterialTheme.typography.bodySmall)
+                }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (name.isNotBlank()) {
-                        val balPaise = MoneyUtils.parseRupeesToPaise(initialBalanceText)
-                        onConfirm(name, selectedType, balPaise, selectedColor)
+                    if (name.isBlank()) {
+                        errorText = "Please enter an account name."
+                        return@Button
                     }
+                    onConfirm(
+                        account.copy(
+                            name = name.trim(),
+                            type = selectedType,
+                            colorHex = selectedColor
+                        )
+                    )
                 },
-                enabled = name.isNotBlank(),
-                modifier = Modifier.testTag("confirm_add_account_btn")
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Text("Add Account")
+                Text("Update")
             }
         },
         dismissButton = {

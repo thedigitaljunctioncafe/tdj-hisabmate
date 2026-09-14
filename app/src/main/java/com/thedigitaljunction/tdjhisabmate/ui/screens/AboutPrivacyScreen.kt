@@ -1,9 +1,5 @@
 package com.thedigitaljunction.tdjhisabmate.ui.screens
 
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,12 +42,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 import com.thedigitaljunction.tdjhisabmate.update.UpdateCheckResult
 import com.thedigitaljunction.tdjhisabmate.update.UpdateChecker
@@ -78,8 +77,8 @@ fun AboutPrivacyScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                shape = RoundedCornerShape(22.dp),
+                colors = CardDefaults.cardColors(containerColor = MintSuccessContainer)
             ) {
                 Column(
                     modifier = Modifier
@@ -90,14 +89,14 @@ fun AboutPrivacyScreen(
                     Box(
                         modifier = Modifier
                             .size(64.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(EmeraldPrimary),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Shield,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = Color.White,
                             modifier = Modifier.size(36.dp)
                         )
                     }
@@ -108,14 +107,14 @@ fun AboutPrivacyScreen(
                         text = "TDJ HisabMate",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onBackground
                     )
 
                     Text(
                         text = "Your Smart Personal Finance Mate",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = EmeraldPrimary
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -123,12 +122,12 @@ fun AboutPrivacyScreen(
                     Text(
                         text = "Developed by The Digital Junction",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "Version ${com.thedigitaljunction.tdjhisabmate.BuildConfig.VERSION_NAME} (Public Release)",
+                        text = "Version ${com.thedigitaljunction.tdjhisabmate.BuildConfig.VERSION_NAME} (v1.1.0 Redesign)",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
                 }
             }
@@ -138,16 +137,16 @@ fun AboutPrivacyScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.SystemUpdate, contentDescription = null, tint = EmeraldPrimary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Public Release & Updates",
@@ -166,7 +165,7 @@ fun AboutPrivacyScreen(
                     when (val res = updateResult) {
                         is UpdateCheckResult.Checking -> {
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -175,7 +174,7 @@ fun AboutPrivacyScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = EmeraldPrimary)
                                     Text(
                                         text = "Checking GitHub Releases...",
                                         style = MaterialTheme.typography.bodySmall,
@@ -187,8 +186,8 @@ fun AboutPrivacyScreen(
 
                         is UpdateCheckResult.UpToDate -> {
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MintSuccess.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MintSuccessContainer,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
@@ -209,8 +208,8 @@ fun AboutPrivacyScreen(
 
                         is UpdateCheckResult.UpdateAvailable -> {
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                                shape = RoundedCornerShape(12.dp),
+                                color = MintSuccessContainer,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -218,12 +217,12 @@ fun AboutPrivacyScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        Icon(Icons.Default.NewReleases, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.NewReleases, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
                                         Text(
                                             text = "New Version Available: v${res.newVersion}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
+                                            color = EmeraldPrimary
                                         )
                                     }
                                     Text(
@@ -238,7 +237,7 @@ fun AboutPrivacyScreen(
 
                         is UpdateCheckResult.Error -> {
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -270,6 +269,7 @@ fun AboutPrivacyScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("check_updates_btn"),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                             shape = RoundedCornerShape(10.dp)
                         ) {
                             Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -309,11 +309,11 @@ fun AboutPrivacyScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MintSuccess)
                         Spacer(modifier = Modifier.width(8.dp))
@@ -332,13 +332,13 @@ fun AboutPrivacyScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Lock, contentDescription = null, tint = EmeraldPrimary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Local-First & Offline Privacy", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
@@ -348,7 +348,7 @@ fun AboutPrivacyScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    HorizontalDivider()
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                     Text("What this means for you:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                     BulletPoint("Works 100% without an active internet connection")
@@ -370,7 +370,7 @@ fun AboutPrivacyScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Info, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Financial Disclaimer", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     }
@@ -392,7 +392,7 @@ private fun BulletPoint(text: String) {
             modifier = Modifier
                 .size(6.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
+                .background(EmeraldPrimary)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

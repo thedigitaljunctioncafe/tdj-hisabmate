@@ -31,17 +31,20 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SyncAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -59,8 +62,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionType
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpenseContainer
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
+import com.thedigitaljunction.tdjhisabmate.ui.theme.TileTxnBg
+import com.thedigitaljunction.tdjhisabmate.ui.theme.TileTxnIcon
 import com.thedigitaljunction.tdjhisabmate.ui.theme.TransferIndigo
+import com.thedigitaljunction.tdjhisabmate.ui.theme.TransferIndigoContainer
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.DateFilterOption
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
@@ -90,7 +99,7 @@ fun TransactionsScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { viewModel.searchQuery.value = it },
-            placeholder = { Text("Search merchant, note, category...") },
+            placeholder = { Text("Search merchant, note, category...", style = MaterialTheme.typography.bodyMedium) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
@@ -100,13 +109,14 @@ fun TransactionsScreen(
                 }
             },
             singleLine = true,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .testTag("search_input"),
             colors = OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                focusedBorderColor = EmeraldPrimary
             )
         )
 
@@ -114,7 +124,7 @@ fun TransactionsScreen(
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = 16.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val typeFilters = listOf("ALL", "EXPENSE", "INCOME", "TRANSFER")
@@ -122,6 +132,7 @@ fun TransactionsScreen(
                 FilterChip(
                     selected = selectedType == type,
                     onClick = { viewModel.selectedTypeFilter.value = type },
+                    shape = RoundedCornerShape(14.dp),
                     label = {
                         Text(
                             when (type) {
@@ -130,7 +141,8 @@ fun TransactionsScreen(
                                 "INCOME" -> "Income"
                                 "TRANSFER" -> "Transfers"
                                 else -> type
-                            }
+                            },
+                            style = MaterialTheme.typography.labelMedium
                         )
                     }
                 )
@@ -141,13 +153,14 @@ fun TransactionsScreen(
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp),
+                .padding(horizontal = 16.dp, vertical = 2.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(DateFilterOption.entries.toTypedArray()) { dateOpt ->
                 FilterChip(
                     selected = selectedDateFilter == dateOpt,
                     onClick = { viewModel.selectedDateFilter.value = dateOpt },
+                    shape = RoundedCornerShape(14.dp),
                     label = {
                         Text(
                             when (dateOpt) {
@@ -155,14 +168,15 @@ fun TransactionsScreen(
                                 DateFilterOption.THIS_MONTH -> "This Month"
                                 DateFilterOption.LAST_30_DAYS -> "Last 30 Days"
                                 DateFilterOption.THIS_YEAR -> "This Year"
-                            }
+                            },
+                            style = MaterialTheme.typography.labelMedium
                         )
                     }
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         if (filteredTxns.isEmpty()) {
             Box(
@@ -175,12 +189,20 @@ fun TransactionsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                        modifier = Modifier.size(48.dp)
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(56.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                     Text(
                         text = if (searchQuery.isNotEmpty()) "No transactions found matching \"$searchQuery\"" else "No transactions recorded yet.",
                         style = MaterialTheme.typography.bodyMedium,
@@ -189,6 +211,8 @@ fun TransactionsScreen(
                     if (searchQuery.isEmpty()) {
                         Button(
                             onClick = onNavigateToAddTransaction,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                             modifier = Modifier.testTag("add_first_transaction_btn")
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -215,8 +239,8 @@ fun TransactionsScreen(
                             text = dateHeader,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
+                            color = EmeraldPrimary,
+                            modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
                         )
                     }
 
@@ -322,7 +346,7 @@ fun TransactionsScreen(
                         txnToDelete = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = CoralExpense)
                 }
             },
             dismissButton = {
@@ -351,26 +375,26 @@ fun TransactionDetailCard(
             .fillMaxWidth()
             .clickable { onClick() }
             .testTag("txn_card_${transaction.id}"),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Category Icon
             Box(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
                         when (transaction.type) {
-                            TransactionType.INCOME.name -> MintSuccess.copy(alpha = 0.15f)
-                            TransactionType.EXPENSE.name -> CoralExpense.copy(alpha = 0.15f)
-                            else -> TransferIndigo.copy(alpha = 0.15f)
+                            TransactionType.INCOME.name -> MintSuccessContainer
+                            TransactionType.EXPENSE.name -> CoralExpenseContainer
+                            else -> TileTxnBg
                         }
                     ),
                 contentAlignment = Alignment.Center
@@ -399,8 +423,9 @@ fun TransactionDetailCard(
                         "${transaction.accountName} → ${transaction.toAccountName ?: "Account"}"
                     else
                         transaction.categoryName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -430,7 +455,7 @@ fun TransactionDetailCard(
                     TransactionType.EXPENSE.name -> "- ${Formatters.formatMoney(transaction.amount, currency)}"
                     else -> Formatters.formatMoney(transaction.amount, currency)
                 },
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = when (transaction.type) {
                     TransactionType.INCOME.name -> MintSuccess
@@ -442,7 +467,7 @@ fun TransactionDetailCard(
             // More Menu
             Box {
                 IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Actions")
+                    Icon(Icons.Default.MoreVert, contentDescription = "Actions", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 DropdownMenu(
                     expanded = showMenu,
@@ -465,8 +490,8 @@ fun TransactionDetailCard(
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete", color = MaterialTheme.colorScheme.error) },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        text = { Text("Delete", color = CoralExpense) },
+                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = CoralExpense) },
                         onClick = {
                             showMenu = false
                             onDelete()

@@ -68,9 +68,13 @@ import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 import com.thedigitaljunction.tdjhisabmate.update.UpdateCheckResult
 import com.thedigitaljunction.tdjhisabmate.update.ui.UpdateDialog
 
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.outlined.BarChart
+
 sealed class Screen(val route: String, val title: String, val filledIcon: ImageVector, val outlinedIcon: ImageVector) {
     data object Home : Screen("home", "Home", Icons.Filled.Home, Icons.Outlined.Home)
     data object Transactions : Screen("transactions", "Transactions", Icons.AutoMirrored.Filled.ReceiptLong, Icons.AutoMirrored.Outlined.ReceiptLong)
+    data object Reports : Screen("reports", "Reports", Icons.Filled.BarChart, Icons.Outlined.BarChart)
     data object Guard : Screen("guard", "Hisab Guard", Icons.Filled.Shield, Icons.Outlined.Shield)
     data object More : Screen("more", "More", Icons.Filled.Widgets, Icons.Outlined.Widgets)
 }
@@ -138,6 +142,7 @@ fun MainApp(
     val bottomNavItems = listOf(
         Screen.Home,
         Screen.Transactions,
+        Screen.Reports,
         Screen.Guard,
         Screen.More
     )
@@ -229,7 +234,13 @@ fun MainApp(
                     },
                     onNavigateToTransactions = { navController.navigate(Screen.Transactions.route) },
                     onNavigateToGuard = { navController.navigate(Screen.Guard.route) },
-                    onNavigateToBudgets = { navController.navigate("budgets") }
+                    onNavigateToBudgets = { navController.navigate("budgets") },
+                    onNavigateToAccounts = { navController.navigate("accounts") },
+                    onNavigateToGoals = { navController.navigate("goals") },
+                    onNavigateToRecurring = { navController.navigate("recurring") },
+                    onNavigateToTransfers = { navController.navigate("add_transaction") },
+                    onNavigateToBackup = { navController.navigate("backup") },
+                    onNavigateToMore = { navController.navigate(Screen.More.route) }
                 )
             }
 

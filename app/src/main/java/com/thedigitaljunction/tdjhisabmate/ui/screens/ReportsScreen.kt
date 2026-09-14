@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,13 +41,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionType
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpenseContainer
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldDark
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
+import com.thedigitaljunction.tdjhisabmate.ui.theme.TileTxnBg
+import com.thedigitaljunction.tdjhisabmate.ui.theme.TileTxnIcon
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 import java.util.Calendar
@@ -106,7 +116,7 @@ fun ReportsScreen(
         expenseTxns.groupBy { it.categoryName }
             .map { (catName, txns) ->
                 val spent = txns.sumOf { it.amount }
-                val percentage = if (totalExpense > 0L) (spent.toFloat() / totalExpense.toFloat()) else 0f
+                val percentage = if (totalExpense > 0.0) (spent.toFloat() / totalExpense.toFloat()) else 0f
                 Triple(catName, spent, percentage)
             }
             .sortedByDescending { it.second }
@@ -136,7 +146,7 @@ fun ReportsScreen(
                     text = "Financial Reports",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "Visual spending analytics & cash flow breakdown",
@@ -155,75 +165,129 @@ fun ReportsScreen(
                         onClick = { selectedPeriodIndex = index },
                         shape = SegmentedButtonDefaults.itemShape(index = index, count = periodOptions.size)
                     ) {
-                        Text(title)
+                        Text(title, style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
         }
 
-        // Overview Summary Card
+        // Split Income & Expense Overview
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Income
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MintSuccessContainer)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(MintSuccess.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.ArrowDownward, contentDescription = null, tint = MintSuccess, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Income", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = Formatters.formatMoney(totalIncome, preferences.currency),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MintSuccess
+                        )
+                    }
+                }
+
+                // Expense
+                Card(
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = CoralExpenseContainer)
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(CoralExpense.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = CoralExpense, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Expenses", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = Formatters.formatMoney(totalExpense, preferences.currency),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = CoralExpense
+                        )
+                    }
+                }
+            }
+        }
+
+        // Net Savings Summary Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (netSavings >= 0) MaterialTheme.colorScheme.surfaceVariant else CoralExpenseContainer
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        // Income
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(if (netSavings >= 0) MintSuccess.copy(alpha = 0.2f) else CoralExpense.copy(alpha = 0.2f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Savings,
+                                contentDescription = null,
+                                tint = if (netSavings >= 0) MintSuccess else CoralExpense,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.ArrowDownward, contentDescription = null, tint = MintSuccess, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Total Income", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                            Text("Net Cash Flow", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                             Text(
-                                Formatters.formatMoney(totalIncome, preferences.currency),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MintSuccess
-                            )
-                        }
-
-                        // Expense
-                        Column(horizontalAlignment = Alignment.End) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = CoralExpense, modifier = Modifier.size(16.dp))
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Text("Total Expenses", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            Text(
-                                Formatters.formatMoney(totalExpense, preferences.currency),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = CoralExpense
+                                if (netSavings >= 0) "Surplus saved this period" else "Deficit in this period",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Net Savings
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Savings, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Net Savings", style = MaterialTheme.typography.labelMedium)
-                        }
-                        Text(
-                            Formatters.formatMoney(netSavings, preferences.currency),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (netSavings >= 0L) MintSuccess else CoralExpense
-                        )
-                    }
+                    Text(
+                        text = Formatters.formatMoney(netSavings, preferences.currency),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (netSavings >= 0) MintSuccess else CoralExpense
+                    )
                 }
             }
         }
@@ -233,26 +297,35 @@ fun ReportsScreen(
             Text(
                 text = "Spending by Category",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
             )
         }
 
         if (categoryBreakdown.isEmpty()) {
             item {
-                Text(
-                    text = "No expenses recorded in this period.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Text(
+                        text = "No expenses recorded in this period.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(20.dp)
+                    )
+                }
             }
         } else {
             items(categoryBreakdown) { (categoryName, spent, percent) ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column(modifier = Modifier.padding(14.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -261,22 +334,22 @@ fun ReportsScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(32.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primaryContainer),
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(TileTxnBg),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         Formatters.getCategoryIcon(categoryName),
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                        modifier = Modifier.size(18.dp)
+                                        tint = TileTxnIcon,
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
                                 Text(
                                     text = categoryName,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.SemiBold
                                 )
                             }
@@ -284,18 +357,18 @@ fun ReportsScreen(
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
                                     text = Formatters.formatMoney(spent, preferences.currency),
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "${(percent * 100).toInt()}%",
+                                    text = "${(percent * 100).toInt()}% of total",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         LinearProgressIndicator(
                             progress = { percent.coerceIn(0f, 1f) },
@@ -303,7 +376,8 @@ fun ReportsScreen(
                                 .fillMaxWidth()
                                 .height(6.dp)
                                 .clip(CircleShape),
-                            color = MaterialTheme.colorScheme.primary
+                            color = EmeraldPrimary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     }
                 }
@@ -316,23 +390,41 @@ fun ReportsScreen(
                 Text(
                     text = "Payment Method Distribution",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
             items(paymentMethodBreakdown) { (method, spent) ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
                 ) {
-                    Text(text = method, style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        text = Formatters.formatMoney(spent, preferences.currency),
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.CreditCard,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(text = method, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                        }
+                        Text(
+                            text = Formatters.formatMoney(spent, preferences.currency),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         }

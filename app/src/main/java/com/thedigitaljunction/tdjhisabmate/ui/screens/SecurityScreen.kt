@@ -17,9 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +37,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -43,6 +45,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 
@@ -76,7 +80,7 @@ fun SecurityScreen(
                     text = "App Lock & Security",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "Protect your financial privacy with 4-digit PIN security",
@@ -89,11 +93,11 @@ fun SecurityScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -117,6 +121,7 @@ fun SecurityScreen(
                                     showDisablePinDialog = true
                                 }
                             },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EmeraldPrimary),
                             modifier = Modifier.testTag("pin_lock_switch")
                         )
                     }
@@ -130,6 +135,8 @@ fun SecurityScreen(
                                 currentPinError = false
                                 showChangePinDialog = true
                             },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -141,6 +148,7 @@ fun SecurityScreen(
                             onClick = {
                                 viewModel.lockSession()
                             },
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("Lock App Now")
@@ -158,7 +166,7 @@ fun SecurityScreen(
                 pinInput = ""
                 confirmPinInput = ""
             },
-            title = { Text("Set 4-Digit Security PIN") },
+            title = { Text("Set 4-Digit Security PIN", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
@@ -168,6 +176,7 @@ fun SecurityScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("pin_code_input")
                     )
 
@@ -178,6 +187,7 @@ fun SecurityScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("pin_confirm_input")
                     )
                 }
@@ -195,6 +205,8 @@ fun SecurityScreen(
                             Toast.makeText(context, "PINs must match and be 4 digits", Toast.LENGTH_SHORT).show()
                         }
                     },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                     enabled = pinInput.length == 4 && pinInput == confirmPinInput
                 ) {
                     Text("Save PIN")
@@ -223,7 +235,7 @@ fun SecurityScreen(
                 confirmPinInput = ""
                 currentPinError = false
             },
-            title = { Text("Change Security PIN") },
+            title = { Text("Change Security PIN", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
@@ -240,6 +252,7 @@ fun SecurityScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("current_pin_input")
                     )
 
@@ -250,6 +263,7 @@ fun SecurityScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("new_pin_input")
                     )
 
@@ -260,6 +274,7 @@ fun SecurityScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("confirm_new_pin_input")
                     )
                 }
@@ -284,6 +299,8 @@ fun SecurityScreen(
                             Toast.makeText(context, "New PINs must match and be 4 digits", Toast.LENGTH_SHORT).show()
                         }
                     },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                     enabled = currentPinInput.length == 4 && pinInput.length == 4 && pinInput == confirmPinInput
                 ) {
                     Text("Update PIN")
@@ -312,7 +329,7 @@ fun SecurityScreen(
                 currentPinInput = ""
                 currentPinError = false
             },
-            title = { Text("Disable PIN Protection") },
+            title = { Text("Disable PIN Protection", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
@@ -333,6 +350,7 @@ fun SecurityScreen(
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("disable_pin_current_input")
                     )
                 }
@@ -351,6 +369,8 @@ fun SecurityScreen(
                             Toast.makeText(context, "Current PIN is incorrect", Toast.LENGTH_SHORT).show()
                         }
                     },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = CoralExpense),
                     enabled = currentPinInput.length == 4
                 ) {
                     Text("Turn Off")

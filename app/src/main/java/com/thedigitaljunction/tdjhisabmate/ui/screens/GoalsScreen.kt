@@ -1,8 +1,10 @@
 package com.thedigitaljunction.tdjhisabmate.ui.screens
 
 import android.app.DatePickerDialog
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -49,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +60,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.data.model.SavingsGoalEntity
+import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
@@ -80,7 +87,8 @@ fun GoalsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = EmeraldPrimary,
+                contentColor = Color.White,
                 modifier = Modifier.testTag("add_goal_fab")
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Goal")
@@ -100,7 +108,7 @@ fun GoalsScreen(
                         text = "Savings Goals",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Set targets for gadgets, travel, emergency funds, or dreams",
@@ -114,13 +122,13 @@ fun GoalsScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(28.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -128,8 +136,12 @@ fun GoalsScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = { showAddDialog = true }) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Button(
+                                onClick = { showAddDialog = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                            ) {
                                 Text("Create Your First Goal")
                             }
                         }
@@ -137,30 +149,39 @@ fun GoalsScreen(
                 }
             } else {
                 items(goals, key = { it.id }) { goal ->
-                    val percent = if (goal.targetAmount > 0L) (goal.savedAmount.toFloat() / goal.targetAmount.toFloat()) else 0f
+                    val percent = if (goal.targetAmount > 0.0) (goal.savedAmount.toFloat() / goal.targetAmount.toFloat()) else 0f
                     val isCompleted = goal.savedAmount >= goal.targetAmount
 
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("goal_item_${goal.id}"),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(18.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
+                        Column(modifier = Modifier.padding(18.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.Savings,
-                                        contentDescription = null,
-                                        tint = if (isCompleted) MintSuccess else MaterialTheme.colorScheme.primary
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(42.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(if (isCompleted) MintSuccessContainer else MaterialTheme.colorScheme.primaryContainer),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isCompleted) Icons.Default.CheckCircle else Icons.Default.Savings,
+                                            contentDescription = null,
+                                            tint = if (isCompleted) MintSuccess else EmeraldPrimary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
                                     Column {
                                         Text(goal.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                                         Text(
@@ -176,38 +197,39 @@ fun GoalsScreen(
                                         onClick = { goalToEdit = goal },
                                         modifier = Modifier.testTag("edit_goal_${goal.id}")
                                     ) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Edit Goal", tint = MaterialTheme.colorScheme.primary)
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit Goal", tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
                                     }
                                     IconButton(
                                         onClick = { goalToDelete = goal },
                                         modifier = Modifier.testTag("delete_goal_${goal.id}")
                                     ) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.outline)
+                                        Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(18.dp))
                                     }
                                 }
                             }
 
                             if (goal.notes.isNotBlank()) {
-                                Spacer(modifier = Modifier.height(4.dp))
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = goal.notes,
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.85f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
                             LinearProgressIndicator(
                                 progress = { percent.coerceIn(0f, 1f) },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(10.dp)
+                                    .height(8.dp)
                                     .clip(CircleShape),
-                                color = if (isCompleted) MintSuccess else MaterialTheme.colorScheme.primary
+                                color = if (isCompleted) MintSuccess else EmeraldPrimary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant
                             )
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -234,7 +256,7 @@ fun GoalsScreen(
                             ) {
                                 OutlinedButton(
                                     onClick = { goalForFundsUpdate = goal },
-                                    shape = RoundedCornerShape(8.dp),
+                                    shape = RoundedCornerShape(10.dp),
                                     modifier = Modifier.testTag("update_funds_btn_${goal.id}")
                                 ) {
                                     Text("Add / Withdraw Funds")
@@ -277,7 +299,7 @@ fun GoalsScreen(
 
         AlertDialog(
             onDismissRequest = { goalForFundsUpdate = null },
-            title = { Text("Update Funds: ${goal.name}") },
+            title = { Text("Update Funds: ${goal.name}", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Current Saved: ${Formatters.formatMoney(goal.savedAmount, preferences.currency)}")
@@ -285,7 +307,8 @@ fun GoalsScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = { isDeposit = true },
-                            colors = if (isDeposit) androidx.compose.material3.ButtonDefaults.buttonColors() else androidx.compose.material3.ButtonDefaults.outlinedButtonColors()
+                            shape = RoundedCornerShape(10.dp),
+                            colors = if (isDeposit) ButtonDefaults.buttonColors(containerColor = EmeraldPrimary) else ButtonDefaults.outlinedButtonColors()
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
@@ -294,7 +317,8 @@ fun GoalsScreen(
 
                         Button(
                             onClick = { isDeposit = false },
-                            colors = if (!isDeposit) androidx.compose.material3.ButtonDefaults.buttonColors() else androidx.compose.material3.ButtonDefaults.outlinedButtonColors()
+                            shape = RoundedCornerShape(10.dp),
+                            colors = if (!isDeposit) ButtonDefaults.buttonColors(containerColor = CoralExpense) else ButtonDefaults.outlinedButtonColors()
                         ) {
                             Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
@@ -308,6 +332,7 @@ fun GoalsScreen(
                         label = { Text("Amount (${preferences.currency})") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -321,7 +346,9 @@ fun GoalsScreen(
                             viewModel.updateGoalFunds(goal, newTotal)
                             goalForFundsUpdate = null
                         }
-                    }
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
                     Text("Update")
                 }
@@ -346,7 +373,7 @@ fun GoalsScreen(
                         goalToDelete = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = CoralExpense)
                 }
             },
             dismissButton = {
@@ -362,7 +389,7 @@ fun GoalsScreen(
 fun AddGoalDialog(
     currency: String,
     onDismiss: () -> Unit,
-    onConfirm: (name: String, targetPaise: Long, initialPaise: Long, targetDate: Long, notes: String) -> Unit
+    onConfirm: (name: String, target: Long, initial: Long, targetDate: Long, notes: String) -> Unit
 ) {
     val context = LocalContext.current
     var name by remember { mutableStateOf("") }
@@ -375,7 +402,7 @@ fun AddGoalDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("New Savings Goal") },
+        title = { Text("New Savings Goal", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -384,6 +411,7 @@ fun AddGoalDialog(
                     label = { Text("Goal Name") },
                     placeholder = { Text("e.g. New Laptop, Vacation, Emergency Fund") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().testTag("goal_name_input")
                 )
 
@@ -393,6 +421,7 @@ fun AddGoalDialog(
                     label = { Text("Target Amount ($currency)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().testTag("goal_target_input")
                 )
 
@@ -403,6 +432,7 @@ fun AddGoalDialog(
                     placeholder = { Text("0.00") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -421,11 +451,11 @@ fun AddGoalDialog(
                                 calendar.get(Calendar.DAY_OF_MONTH)
                             ).show()
                         },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Target Date: ${Formatters.formatDate(targetDateMillis)}", style = MaterialTheme.typography.bodySmall)
                     }
@@ -438,10 +468,12 @@ fun AddGoalDialog(
                     val targetPaise = MoneyUtils.parseRupeesToPaise(targetText)
                     val initialPaise = MoneyUtils.parseRupeesToPaise(initialText)
                     if (name.isNotBlank() && targetPaise > 0L) {
-                        onConfirm(name, targetPaise, initialPaise, targetDateMillis, notes)
+                        onConfirm(name.trim(), targetPaise, initialPaise, targetDateMillis, notes.trim())
                     }
                 },
-                enabled = name.isNotBlank() && MoneyUtils.parseRupeesToPaise(targetText) > 0L,
+                enabled = name.isNotBlank() && (MoneyUtils.parseRupeesToPaise(targetText) > 0L),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                 modifier = Modifier.testTag("confirm_add_goal_btn")
             ) {
                 Text("Create Goal")
@@ -465,9 +497,7 @@ fun EditGoalDialog(
     val context = LocalContext.current
     var name by remember { mutableStateOf(goal.name) }
     var targetText by remember {
-        val whole = goal.targetAmount / 100
-        val frac = goal.targetAmount % 100
-        mutableStateOf(if (frac == 0L) whole.toString() else String.format(java.util.Locale.US, "%.2f", goal.targetAmount / 100.0))
+        mutableStateOf(MoneyUtils.formatPaiseForInput(goal.targetAmount))
     }
     var targetDateMillis by remember { mutableLongStateOf(goal.targetDateMillis) }
     var notes by remember { mutableStateOf(goal.notes) }
@@ -476,7 +506,7 @@ fun EditGoalDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Savings Goal") },
+        title = { Text("Edit Savings Goal", fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -484,6 +514,7 @@ fun EditGoalDialog(
                     onValueChange = { name = it },
                     label = { Text("Goal Name") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("edit_goal_name_input")
@@ -495,6 +526,7 @@ fun EditGoalDialog(
                     label = { Text("Target Amount ($currency)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("edit_goal_target_input")
@@ -515,11 +547,11 @@ fun EditGoalDialog(
                                 calendar.get(Calendar.DAY_OF_MONTH)
                             ).show()
                         },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Target Date: ${Formatters.formatDate(targetDateMillis)}", style = MaterialTheme.typography.bodySmall)
                     }
@@ -530,13 +562,14 @@ fun EditGoalDialog(
                     onValueChange = { notes = it },
                     label = { Text("Notes (Optional)") },
                     placeholder = { Text("Details or motivation...") },
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
                     text = "Current Saved: ${Formatters.formatMoney(goal.savedAmount, currency, true)} (Preserved)",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = EmeraldPrimary,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -556,7 +589,9 @@ fun EditGoalDialog(
                         )
                     }
                 },
-                enabled = name.isNotBlank() && MoneyUtils.parseRupeesToPaise(targetText) > 0L,
+                enabled = name.isNotBlank() && (MoneyUtils.parseRupeesToPaise(targetText) > 0L),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                 modifier = Modifier.testTag("confirm_edit_goal_btn")
             ) {
                 Text("Save Changes")

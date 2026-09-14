@@ -33,7 +33,6 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lightbulb
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Shield
@@ -50,6 +49,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -60,6 +60,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -67,9 +68,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.hisabguard.GuardPrompt
-import com.thedigitaljunction.tdjhisabmate.notification.HisabNotificationHelper
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 import java.util.Locale
@@ -84,7 +86,6 @@ fun HisabGuardScreen(
     val context = LocalContext.current
     val guardStatus by viewModel.guardStatus.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
-    val allReviews by viewModel.allDailyReviews.collectAsStateWithLifecycle()
 
     var showCloseConfirmDialog by remember { mutableStateOf(false) }
 
@@ -110,7 +111,7 @@ fun HisabGuardScreen(
                     Icon(
                         imageVector = Icons.Default.Shield,
                         contentDescription = "Hisab Guard",
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = EmeraldPrimary,
                         modifier = Modifier.size(28.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -118,7 +119,7 @@ fun HisabGuardScreen(
                         text = "Hisab Guard",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 Text(
@@ -138,11 +139,11 @@ fun HisabGuardScreen(
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (guardStatus.isDayClosed)
-                        MintSuccess.copy(alpha = 0.12f)
+                        MintSuccessContainer.copy(alpha = 0.5f)
                     else
-                        MaterialTheme.colorScheme.secondaryContainer
+                        MaterialTheme.colorScheme.surface
                 ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Row(
@@ -151,13 +152,21 @@ fun HisabGuardScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = if (guardStatus.isDayClosed) Icons.Default.VerifiedUser else Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = if (guardStatus.isDayClosed) MintSuccess else MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (guardStatus.isDayClosed) MintSuccessContainer else Color(0xFFFEE2E2)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (guardStatus.isDayClosed) Icons.Default.VerifiedUser else Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = if (guardStatus.isDayClosed) MintSuccess else CoralExpense,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
                                     text = "Today's Hisab",
@@ -173,14 +182,14 @@ fun HisabGuardScreen(
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (guardStatus.isDayClosed) MintSuccess else MaterialTheme.colorScheme.errorContainer
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (guardStatus.isDayClosed) MintSuccess else Color(0xFFFEE2E2)
                         ) {
                             Text(
-                                text = if (guardStatus.isDayClosed) "VERIFIED & CLOSED" else "PENDING REVIEW",
+                                text = if (guardStatus.isDayClosed) "VERIFIED" else "PENDING",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.ExtraBold,
-                                color = if (guardStatus.isDayClosed) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onErrorContainer,
+                                color = if (guardStatus.isDayClosed) Color.White else CoralExpense,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                             )
                         }
@@ -218,8 +227,8 @@ fun HisabGuardScreen(
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
-                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     if (guardStatus.isDayClosed) {
                         Text(
@@ -227,10 +236,11 @@ fun HisabGuardScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                             OutlinedButton(
                                 onClick = { viewModel.reopenDayHisab(guardStatus.dateString) },
+                                shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.testTag("guard_reopen_btn")
                             ) {
                                 Icon(Icons.Default.Replay, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -245,7 +255,7 @@ fun HisabGuardScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(14.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -256,18 +266,20 @@ fun HisabGuardScreen(
                                 modifier = Modifier
                                     .weight(1f)
                                     .testTag("guard_close_dialog_btn"),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                             ) {
                                 Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Close Today's Hisab")
+                                Text("Close Today")
                             }
 
                             OutlinedButton(
                                 onClick = { viewModel.closeTodayHisab(hadNoExpenses = true) },
+                                shape = RoundedCornerShape(10.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("No Expenses Today")
+                                Text("No Expenses")
                             }
                         }
                     }
@@ -281,7 +293,8 @@ fun HisabGuardScreen(
                 Text(
                     text = "Smart Prompts & Checks",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldPrimary
                 )
             }
 
@@ -300,14 +313,14 @@ fun HisabGuardScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Default.Info, contentDescription = null, tint = EmeraldPrimary)
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -331,18 +344,19 @@ fun HisabGuardScreen(
             Text(
                 text = "Hisab Guard Controls",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = EmeraldPrimary
             )
         }
 
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     // Main Guard Toggle
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -363,12 +377,13 @@ fun HisabGuardScreen(
                                 }
                                 viewModel.setHisabGuardEnabled(enabled)
                             },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EmeraldPrimary),
                             modifier = Modifier.testTag("guard_master_toggle")
                         )
                     }
 
                     if (preferences.isHisabGuardEnabled) {
-                        HorizontalDivider()
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                         // Daily Reminder Time Picker
                         Row(
@@ -398,27 +413,27 @@ fun HisabGuardScreen(
                                 )
                             }
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
+                                shape = RoundedCornerShape(10.dp),
+                                color = MintSuccessContainer
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.AccessTime, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    Icon(Icons.Default.AccessTime, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(
                                         text = String.format(Locale.US, "%02d:%02d", preferences.dailyReviewHour, preferences.dailyReviewMinute),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                        color = EmeraldPrimary
                                     )
                                 }
                             }
                         }
                     }
 
-                    HorizontalDivider()
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                     // Pattern Awareness Toggle
                     Row(
@@ -432,11 +447,12 @@ fun HisabGuardScreen(
                         }
                         Switch(
                             checked = preferences.isPatternAwarenessEnabled,
-                            onCheckedChange = { viewModel.setPatternAwarenessEnabled(it) }
+                            onCheckedChange = { viewModel.setPatternAwarenessEnabled(it) },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EmeraldPrimary)
                         )
                     }
 
-                    HorizontalDivider()
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                     // Missed Cash Expense Prompt Toggle
                     Row(
@@ -450,7 +466,8 @@ fun HisabGuardScreen(
                         }
                         Switch(
                             checked = preferences.isMissedExpensePromptEnabled,
-                            onCheckedChange = { viewModel.setMissedExpensePromptEnabled(it) }
+                            onCheckedChange = { viewModel.setMissedExpensePromptEnabled(it) },
+                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = EmeraldPrimary)
                         )
                     }
                 }
@@ -461,14 +478,14 @@ fun HisabGuardScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Lock, contentDescription = null, tint = EmeraldPrimary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text("100% Local-First & ₹0 Cost Promise", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
@@ -487,8 +504,8 @@ fun HisabGuardScreen(
     if (showCloseConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showCloseConfirmDialog = false },
-            icon = { Icon(Icons.Default.Shield, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-            title = { Text("Close Today's Hisab") },
+            icon = { Icon(Icons.Default.Shield, contentDescription = null, tint = EmeraldPrimary) },
+            title = { Text("Close Today's Hisab", fontWeight = FontWeight.Bold) },
             text = {
                 Text("Are you sure you have recorded all of today's expenses? Once confirmed, today's hisab will be marked as verified.")
             },
@@ -498,6 +515,8 @@ fun HisabGuardScreen(
                         viewModel.closeTodayHisab(hadNoExpenses = false)
                         showCloseConfirmDialog = false
                     },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                     modifier = Modifier.testTag("guard_confirm_close_btn")
                 ) {
                     Text("Yes, Complete Today")
@@ -521,9 +540,9 @@ private fun SmartPromptCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("prompt_card_${prompt.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
         Row(
             modifier = Modifier
@@ -535,7 +554,7 @@ private fun SmartPromptCard(
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MintSuccessContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -546,8 +565,8 @@ private fun SmartPromptCard(
                         else -> Icons.AutoMirrored.Filled.HelpOutline
                     },
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(22.dp)
+                    tint = EmeraldPrimary,
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -565,11 +584,12 @@ private fun SmartPromptCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Button(
                     onClick = onAction,
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = if (prompt.suggestedCategory != null) "Add ${prompt.suggestedCategory}" else "Add Expense",

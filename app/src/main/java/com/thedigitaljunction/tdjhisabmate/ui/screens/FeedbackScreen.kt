@@ -22,12 +22,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -52,6 +52,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.ui.theme.AmberAccent
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 
 private const val DEVELOPER_EMAIL = "thedigitaljunctioncafe@gmail.com"
@@ -116,7 +117,7 @@ fun FeedbackScreen(
                     text = "Feedback & Feature Requests",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "Help us improve TDJ HisabMate. Developed by The Digital Junction ($DEVELOPER_EMAIL).",
@@ -130,11 +131,11 @@ fun FeedbackScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         text = "How is TDJ HisabMate working for you?",
                         style = MaterialTheme.typography.titleMedium,
@@ -150,21 +151,22 @@ fun FeedbackScreen(
                             Icon(
                                 imageVector = if (i <= ratingStars) Icons.Default.Star else Icons.Default.StarBorder,
                                 contentDescription = "$i Stars",
-                                tint = if (i <= ratingStars) AmberAccent else MaterialTheme.colorScheme.outline,
+                                tint = if (i <= ratingStars) AmberAccent else MaterialTheme.colorScheme.outlineVariant,
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(38.dp)
                                     .clickable { ratingStars = i }
                                     .padding(4.dp)
                             )
                         }
                     }
 
-                    Text("Feedback Category", style = MaterialTheme.typography.labelMedium)
+                    Text("Feedback Category", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(categories) { cat ->
                             FilterChip(
                                 selected = selectedCategory == cat,
                                 onClick = { selectedCategory = cat },
+                                shape = RoundedCornerShape(12.dp),
                                 label = { Text(cat) }
                             )
                         }
@@ -175,6 +177,7 @@ fun FeedbackScreen(
                         onValueChange = { comments = it },
                         label = { Text("Your comments or suggestions") },
                         placeholder = { Text("Tell us what you love or what needs improvement...") },
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(100.dp)
@@ -187,6 +190,7 @@ fun FeedbackScreen(
                         label = { Text("Email / Contact (Optional)") },
                         placeholder = { Text("If you'd like a response") },
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -207,7 +211,7 @@ fun FeedbackScreen(
                                 }
                                 appendLine()
                                 appendLine("App Version:")
-                                appendLine("1.0.2")
+                                appendLine("1.1.0")
                             }
                             openEmailComposer(
                                 context = context,
@@ -218,6 +222,8 @@ fun FeedbackScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("submit_feedback_btn"),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                         enabled = comments.isNotBlank()
                     ) {
                         Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -243,6 +249,7 @@ fun FeedbackScreen(
 
                 OutlinedButton(
                     onClick = { showNewFeatureDialog = true },
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.testTag("suggest_feature_btn")
                 ) {
                     Text("+ Suggest")
@@ -254,7 +261,7 @@ fun FeedbackScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 ) {
                     Column(
@@ -275,14 +282,14 @@ fun FeedbackScreen(
             items(featureRequests, key = { it.id }) { req ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(12.dp),
+                            .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
@@ -304,7 +311,7 @@ fun FeedbackScreen(
                                     }
                                     appendLine()
                                     appendLine("App Version:")
-                                    appendLine("1.0.2")
+                                    appendLine("1.1.0")
                                 }
                                 openEmailComposer(
                                     context = context,
@@ -318,9 +325,9 @@ fun FeedbackScreen(
 
                         IconButton(onClick = { viewModel.upvoteFeatureRequest(req.id) }) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.ThumbUp, contentDescription = "Vote", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                                Icon(Icons.Default.ThumbUp, contentDescription = "Vote", modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("${req.votes}", style = MaterialTheme.typography.labelSmall)
+                                Text("${req.votes}", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
@@ -335,7 +342,7 @@ fun FeedbackScreen(
 
         AlertDialog(
             onDismissRequest = { showNewFeatureDialog = false },
-            title = { Text("Suggest a New Feature") },
+            title = { Text("Suggest a New Feature", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
@@ -344,6 +351,7 @@ fun FeedbackScreen(
                         label = { Text("Feature Title") },
                         placeholder = { Text("e.g. Daily SMS expense parser") },
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("feature_title_input")
                     )
 
@@ -351,8 +359,9 @@ fun FeedbackScreen(
                         value = featureDesc,
                         onValueChange = { featureDesc = it },
                         label = { Text("Description") },
-                        placeholder = { Text("Explain how this feature will help your hisab...") },
-                        modifier = Modifier.fillMaxWidth().height(90.dp)
+                        placeholder = { Text("Why would this be useful?") },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().height(90.dp).testTag("feature_desc_input")
                     )
                 }
             },
@@ -360,37 +369,18 @@ fun FeedbackScreen(
                 Button(
                     onClick = {
                         if (featureTitle.isNotBlank()) {
-                            val title = featureTitle.trim()
-                            val desc = featureDesc.trim()
-                            viewModel.submitFeatureRequest(title, desc) {}
-                            showNewFeatureDialog = false
-                            val emailBody = buildString {
-                                appendLine("TDJ HisabMate Feature Suggestion")
-                                appendLine()
-                                appendLine("Suggestion:")
-                                appendLine(title)
-                                if (desc.isNotBlank()) {
-                                    appendLine()
-                                    appendLine("Additional Details:")
-                                    appendLine(desc)
-                                }
-                                appendLine()
-                                appendLine("App Version:")
-                                appendLine("1.0.2")
+                            viewModel.submitFeatureRequest(featureTitle.trim(), featureDesc.trim()) {
+                                showNewFeatureDialog = false
+                                Toast.makeText(context, "Feature suggestion added!", Toast.LENGTH_SHORT).show()
                             }
-                            openEmailComposer(
-                                context = context,
-                                subject = "TDJ HisabMate Feature Suggestion — $title",
-                                body = emailBody
-                            )
                         }
                     },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                     enabled = featureTitle.isNotBlank(),
-                    modifier = Modifier.testTag("send_feature_suggestion_btn")
+                    modifier = Modifier.testTag("save_feature_btn")
                 ) {
-                    Icon(Icons.Default.Email, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Send via Email")
+                    Text("Submit")
                 }
             },
             dismissButton = {

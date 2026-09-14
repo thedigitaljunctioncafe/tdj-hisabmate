@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionType
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
 import com.thedigitaljunction.tdjhisabmate.ui.theme.TransferIndigo
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
@@ -245,7 +247,7 @@ fun AddTransactionScreen(
                 modifier = Modifier.testTag("save_transaction_btn"),
                 enabled = isSaveEnabled
             ) {
-                Icon(Icons.Default.Check, contentDescription = "Save", tint = if (isSaveEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
+                Icon(Icons.Default.Check, contentDescription = "Save", tint = if (isSaveEnabled) EmeraldPrimary else MaterialTheme.colorScheme.outline)
             }
         }
 
@@ -269,9 +271,9 @@ fun AddTransactionScreen(
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size),
                     colors = SegmentedButtonDefaults.colors(
                         activeContainerColor = when (typeName) {
-                            TransactionType.INCOME.name -> MintSuccess.copy(alpha = 0.2f)
-                            TransactionType.EXPENSE.name -> CoralExpense.copy(alpha = 0.2f)
-                            else -> TransferIndigo.copy(alpha = 0.2f)
+                            TransactionType.INCOME.name -> MintSuccess.copy(alpha = 0.15f)
+                            TransactionType.EXPENSE.name -> CoralExpense.copy(alpha = 0.15f)
+                            else -> TransferIndigo.copy(alpha = 0.15f)
                         },
                         activeContentColor = when (typeName) {
                             TransactionType.INCOME.name -> MintSuccess
@@ -295,11 +297,12 @@ fun AddTransactionScreen(
         // Big Amount Card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
         ) {
             Column(
-                modifier = Modifier.padding(16.dp),
+                modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -316,7 +319,7 @@ fun AddTransactionScreen(
                             amountText = input
                         }
                     },
-                    placeholder = { Text("0.00", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                    placeholder = { Text("0.00", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)) },
                     textStyle = MaterialTheme.typography.headlineLarge.copy(
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
@@ -338,6 +341,8 @@ fun AddTransactionScreen(
                     )
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Quick Increment Chips
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -346,11 +351,10 @@ fun AddTransactionScreen(
                     val increments = listOf(50, 100, 500, 1000)
                     increments.forEach { inc ->
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surface,
-                            shadowElevation = 1.dp,
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
                             modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
+                                .clip(RoundedCornerShape(12.dp))
                                 .clickable {
                                     val curPaise = MoneyUtils.parseRupeesToPaise(amountText)
                                     val incPaise = inc * 100L
@@ -363,7 +367,7 @@ fun AddTransactionScreen(
                                 text = "+$inc",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
                             )
                         }
                     }
@@ -376,7 +380,8 @@ fun AddTransactionScreen(
             Text(
                 text = if (selectedType == TransactionType.TRANSFER.name) "From Account" else "Account / Wallet",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = EmeraldPrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -384,6 +389,7 @@ fun AddTransactionScreen(
                     FilterChip(
                         selected = selectedAccountId == acc.id,
                         onClick = { selectedAccountId = acc.id },
+                        shape = RoundedCornerShape(12.dp),
                         label = { Text(acc.name) }
                     )
                 }
@@ -396,7 +402,8 @@ fun AddTransactionScreen(
                 Text(
                     text = "To Account",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldPrimary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 val availableDestAccounts = accounts.filter { it.id != selectedAccountId }
@@ -404,7 +411,7 @@ fun AddTransactionScreen(
                     Text(
                         text = "At least 2 accounts are needed to record a transfer. Please create another account first in Accounts.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error
+                        color = CoralExpense
                     )
                 } else {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -412,6 +419,7 @@ fun AddTransactionScreen(
                             FilterChip(
                                 selected = selectedToAccountId == acc.id,
                                 onClick = { selectedToAccountId = acc.id },
+                                shape = RoundedCornerShape(12.dp),
                                 label = { Text(acc.name) }
                             )
                         }
@@ -426,7 +434,8 @@ fun AddTransactionScreen(
                 Text(
                     text = "Category",
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldPrimary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(
@@ -439,6 +448,7 @@ fun AddTransactionScreen(
                                 selectedCategoryId = cat.id
                                 selectedCategoryName = cat.name
                             },
+                            shape = RoundedCornerShape(12.dp),
                             label = { Text(cat.name) },
                             leadingIcon = {
                                 Icon(
@@ -458,7 +468,8 @@ fun AddTransactionScreen(
             Text(
                 text = "Payment Method",
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = EmeraldPrimary
             )
             Spacer(modifier = Modifier.height(8.dp))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -467,6 +478,7 @@ fun AddTransactionScreen(
                     FilterChip(
                         selected = selectedPaymentMethod == method,
                         onClick = { selectedPaymentMethod = method },
+                        shape = RoundedCornerShape(12.dp),
                         label = { Text(method) }
                     )
                 }
@@ -497,14 +509,14 @@ fun AddTransactionScreen(
                             calendar.get(Calendar.DAY_OF_MONTH)
                         ).show()
                     },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldPrimary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(Formatters.formatDate(dateMillis), style = MaterialTheme.typography.bodyMedium)
                 }
@@ -528,14 +540,14 @@ fun AddTransactionScreen(
                             false
                         ).show()
                     },
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.AccessTime, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.AccessTime, contentDescription = null, modifier = Modifier.size(18.dp), tint = EmeraldPrimary)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(Formatters.formatTime(dateMillis), style = MaterialTheme.typography.bodyMedium)
                 }
@@ -630,7 +642,8 @@ fun AddTransactionScreen(
                 .height(52.dp)
                 .testTag("save_transaction_primary_btn"),
             enabled = isSaveEnabled,
-            shape = RoundedCornerShape(16.dp)
+            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+            shape = RoundedCornerShape(14.dp)
         ) {
             Icon(Icons.Default.Done, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
@@ -644,13 +657,14 @@ fun AddTransactionScreen(
         var newCatName by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showAddCategoryDialog = false },
-            title = { Text("Add Custom Category") },
+            title = { Text("Add Custom Category", fontWeight = FontWeight.Bold) },
             text = {
                 OutlinedTextField(
                     value = newCatName,
                     onValueChange = { newCatName = it },
                     label = { Text("Category Name") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
             },
@@ -668,7 +682,9 @@ fun AddTransactionScreen(
                             showAddCategoryDialog = false
                         }
                     },
-                    enabled = newCatName.isNotBlank()
+                    enabled = newCatName.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                    shape = RoundedCornerShape(10.dp)
                 ) {
                     Text("Add")
                 }

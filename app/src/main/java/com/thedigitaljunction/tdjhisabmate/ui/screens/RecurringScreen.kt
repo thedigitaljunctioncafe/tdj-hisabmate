@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -46,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -58,6 +60,7 @@ import com.thedigitaljunction.tdjhisabmate.data.model.RecurrenceFrequency
 import com.thedigitaljunction.tdjhisabmate.data.model.RecurringTransactionEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionType
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
 import com.thedigitaljunction.tdjhisabmate.ui.util.Formatters
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
@@ -83,7 +86,8 @@ fun RecurringScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { showAddDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
+                containerColor = EmeraldPrimary,
+                contentColor = Color.White,
                 modifier = Modifier.testTag("add_recurring_fab")
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Add Recurring")
@@ -103,7 +107,7 @@ fun RecurringScreen(
                         text = "Recurring Subscriptions & Bills",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Track rent, EMIs, utilities, and scheduled payments",
@@ -117,13 +121,13 @@ fun RecurringScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(24.dp),
+                                .padding(28.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
@@ -131,8 +135,12 @@ fun RecurringScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = { showAddDialog = true }) {
+                            Spacer(modifier = Modifier.height(14.dp))
+                            Button(
+                                onClick = { showAddDialog = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                            ) {
                                 Text("Add Recurring Bill or Salary")
                             }
                         }
@@ -161,8 +169,8 @@ fun RecurringScreen(
             categories = categories,
             initialRecurring = null,
             onDismiss = { showAddDialog = false },
-            onConfirm = { title, type, amountPaise, catId, catName, accId, accName, freq, dueMillis, method, note ->
-                viewModel.addRecurring(title, type, amountPaise, catId, catName, accId, accName, freq, dueMillis, method, note)
+            onConfirm = { title, type, amount, catId, catName, accId, accName, freq, dueMillis, method, note ->
+                viewModel.addRecurring(title, type, amount, catId, catName, accId, accName, freq, dueMillis, method, note)
                 showAddDialog = false
             }
         )
@@ -177,12 +185,12 @@ fun RecurringScreen(
             categories = categories,
             initialRecurring = rec,
             onDismiss = { itemToEdit = null },
-            onConfirm = { title, type, amountPaise, catId, catName, accId, accName, freq, dueMillis, method, note ->
+            onConfirm = { title, type, amount, catId, catName, accId, accName, freq, dueMillis, method, note ->
                 viewModel.updateRecurring(
                     rec.copy(
                         title = title,
                         type = type,
-                        amount = amountPaise,
+                        amount = amount,
                         categoryId = catId,
                         categoryName = catName,
                         accountId = accId,
@@ -210,7 +218,7 @@ fun RecurringScreen(
                         itemToDelete = null
                     }
                 ) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                    Text("Delete", color = CoralExpense)
                 }
             },
             dismissButton = {
@@ -234,11 +242,11 @@ fun RecurringItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .testTag("recurring_item_${item.id}"),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(18.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -290,7 +298,8 @@ fun RecurringItemCard(
             // Primary Action: Record Due Now
             Button(
                 onClick = onRecordNow,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("record_due_btn_${item.id}")
@@ -309,7 +318,7 @@ fun RecurringItemCard(
             ) {
                 OutlinedButton(
                     onClick = onEdit,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .weight(1f)
                         .testTag("edit_recurring_${item.id}")
@@ -321,17 +330,17 @@ fun RecurringItemCard(
 
                 OutlinedButton(
                     onClick = onDelete,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = CoralExpense
                     ),
                     modifier = Modifier
                         .weight(1f)
                         .testTag("delete_recurring_${item.id}")
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = CoralExpense, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Delete")
+                    Text("Delete", color = CoralExpense)
                 }
             }
         }
@@ -350,7 +359,7 @@ fun AddEditRecurringDialog(
     onConfirm: (
         title: String,
         type: String,
-        amountPaise: Long,
+        amount: Long,
         catId: Long?,
         catName: String,
         accId: Long,
@@ -367,7 +376,7 @@ fun AddEditRecurringDialog(
     var amountText by remember {
         mutableStateOf(
             if (initialRecurring != null) {
-                String.format(java.util.Locale.ENGLISH, "%.2f", MoneyUtils.paiseToRupees(initialRecurring.amount))
+                MoneyUtils.formatPaiseForInput(initialRecurring.amount)
             } else ""
         )
     }
@@ -388,7 +397,7 @@ fun AddEditRecurringDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(titleDialog) },
+        title = { Text(titleDialog, fontWeight = FontWeight.Bold) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -397,6 +406,7 @@ fun AddEditRecurringDialog(
                     label = { Text("Title / Purpose") },
                     placeholder = { Text("e.g. House Rent, Netflix, Loan EMI, Salary") },
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().testTag("recurring_title_input")
                 )
 
@@ -406,6 +416,7 @@ fun AddEditRecurringDialog(
                     label = { Text("Amount ($currency)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth().testTag("recurring_amount_input")
                 )
 
@@ -416,6 +427,7 @@ fun AddEditRecurringDialog(
                         FilterChip(
                             selected = frequency == f,
                             onClick = { frequency = f },
+                            shape = RoundedCornerShape(12.dp),
                             label = { Text(f) }
                         )
                     }
@@ -437,11 +449,11 @@ fun AddEditRecurringDialog(
                                 calendar.get(Calendar.DAY_OF_MONTH)
                             ).show()
                         },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp), tint = EmeraldPrimary)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Next Due: ${Formatters.formatDate(dueMillis)}", style = MaterialTheme.typography.bodySmall)
                     }
@@ -456,7 +468,7 @@ fun AddEditRecurringDialog(
                     val cat = categories.find { it.id == selectedCatId } ?: categories.firstOrNull()
                     if (title.isNotBlank() && amountPaise > 0L && acc != null) {
                         onConfirm(
-                            title,
+                            title.trim(),
                             type,
                             amountPaise,
                             cat?.id,
@@ -470,7 +482,9 @@ fun AddEditRecurringDialog(
                         )
                     }
                 },
-                enabled = title.isNotBlank() && MoneyUtils.parseRupeesToPaise(amountText) > 0L,
+                enabled = title.isNotBlank() && (MoneyUtils.parseRupeesToPaise(amountText) > 0L),
+                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                 modifier = Modifier.testTag("confirm_add_recurring_btn")
             ) {
                 Text(confirmButtonText)

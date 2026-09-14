@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Lock
@@ -35,6 +36,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
 import com.thedigitaljunction.tdjhisabmate.ui.util.SecurityUtils
 
 @Composable
@@ -65,14 +68,14 @@ fun PinLockScreen(
             Box(
                 modifier = Modifier
                     .size(72.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MintSuccessContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.Lock,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = EmeraldPrimary,
                     modifier = Modifier.size(36.dp)
                 )
             }
@@ -83,9 +86,9 @@ fun PinLockScreen(
                 text = "TDJ HisabMate",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onBackground
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = if (isError) "Incorrect PIN, please try again" else "Enter your 4-digit PIN to unlock",
                 style = MaterialTheme.typography.bodyMedium,
@@ -103,9 +106,9 @@ fun PinLockScreen(
                             .clip(CircleShape)
                             .background(
                                 if (i < enteredPin.length)
-                                    MaterialTheme.colorScheme.primary
+                                    EmeraldPrimary
                                 else
-                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                             )
                     )
                 }

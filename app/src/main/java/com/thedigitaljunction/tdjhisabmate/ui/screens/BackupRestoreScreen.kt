@@ -7,7 +7,9 @@ import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -29,6 +31,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -45,11 +48,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
+import com.thedigitaljunction.tdjhisabmate.ui.theme.TileReportsBg
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 import kotlinx.coroutines.launch
 import java.io.File
@@ -188,7 +194,7 @@ fun BackupRestoreScreen(
                     text = "Backup & Data Export",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "100% Local-First Data Sovereignty. You own your data.",
@@ -206,7 +212,7 @@ fun BackupRestoreScreen(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             ) {
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Lock, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Default.Lock, contentDescription = null, tint = EmeraldPrimary)
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "TDJ HisabMate never uploads your data to any cloud or remote server. All backups are generated locally using the native .hmb format for complete privacy.",
@@ -221,23 +227,31 @@ fun BackupRestoreScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(TileReportsBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.CloudUpload, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text("Export Backup (.hmb File)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Creates a versioned HisabMate Backup (.hmb) file containing all accounts, transactions, recurring rules, budgets, and savings goals.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -252,6 +266,8 @@ fun BackupRestoreScreen(
                                     saveHmbLauncher.launch("tdj_hisabmate_backup_$timestamp.hmb")
                                 }
                             },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("save_backup_file_btn")
@@ -261,6 +277,7 @@ fun BackupRestoreScreen(
 
                         OutlinedButton(
                             onClick = { shareHmbBackupFile() },
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("share_backup_file_btn")
@@ -281,6 +298,7 @@ fun BackupRestoreScreen(
                                 Toast.makeText(context, "Backup copied to clipboard!", Toast.LENGTH_SHORT).show()
                             }
                         },
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("export_json_copy_btn")
@@ -297,23 +315,31 @@ fun BackupRestoreScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.CloudDownload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(TileReportsBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.CloudDownload, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text("Restore from Backup (.hmb File)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Select a .hmb file to restore your financial records. Existing data is preserved, and duplicate transactions are safely skipped.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -323,6 +349,8 @@ fun BackupRestoreScreen(
                                 viewModel.isExternalPickerActive = true
                                 openHmbLauncher.launch(arrayOf("*/*", "application/octet-stream", "application/json"))
                             },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("open_backup_file_btn")
@@ -332,6 +360,7 @@ fun BackupRestoreScreen(
 
                         OutlinedButton(
                             onClick = { showPasteRestoreDialog = true },
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier
                                 .weight(1f)
                                 .testTag("open_restore_dialog_btn")
@@ -347,23 +376,31 @@ fun BackupRestoreScreen(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp)
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Description, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(TileReportsBg),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Description, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
                         Text("Export Spreadsheet (CSV)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Export all transactions to standard CSV format for Excel, Google Sheets, or tax filing.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -378,6 +415,8 @@ fun BackupRestoreScreen(
                                     saveCsvLauncher.launch("tdj_hisabmate_transactions_$timestamp.csv")
                                 }
                             },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                             modifier = Modifier.weight(1f)
                         ) {
                             Text("Save CSV")
@@ -397,6 +436,7 @@ fun BackupRestoreScreen(
                                     context.startActivity(shareIntent)
                                 }
                             },
+                            shape = RoundedCornerShape(10.dp),
                             modifier = Modifier.weight(1f)
                         ) {
                             Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -415,6 +455,7 @@ fun BackupRestoreScreen(
                                 Toast.makeText(context, "CSV copied to clipboard!", Toast.LENGTH_SHORT).show()
                             }
                         },
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -429,7 +470,7 @@ fun BackupRestoreScreen(
     if (showPasteRestoreDialog) {
         AlertDialog(
             onDismissRequest = { showPasteRestoreDialog = false },
-            title = { Text("Paste Backup JSON / .hmb") },
+            title = { Text("Paste Backup JSON / .hmb", fontWeight = FontWeight.Bold) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
@@ -440,6 +481,7 @@ fun BackupRestoreScreen(
                         value = restoreJsonText,
                         onValueChange = { restoreJsonText = it },
                         placeholder = { Text("{\"backupVersion\":2, \"accounts\":[...]}") },
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp)
@@ -460,6 +502,8 @@ fun BackupRestoreScreen(
                             }
                         }
                     },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                     enabled = restoreJsonText.isNotBlank(),
                     modifier = Modifier.testTag("confirm_restore_btn")
                 ) {

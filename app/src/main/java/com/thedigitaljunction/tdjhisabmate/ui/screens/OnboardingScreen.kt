@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
+import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
 import com.thedigitaljunction.tdjhisabmate.ui.viewmodel.HisabViewModel
 
@@ -78,7 +81,7 @@ fun OnboardingScreen(
                         onFinish()
                     }
                 ) {
-                    Text("Skip")
+                    Text("Skip", color = EmeraldPrimary, fontWeight = FontWeight.SemiBold)
                 }
             } else {
                 Spacer(modifier = Modifier.height(48.dp))
@@ -105,14 +108,14 @@ fun OnboardingScreen(
                     Box(
                         modifier = Modifier
                             .size(72.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MintSuccessContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Default.AccountBalanceWallet,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = EmeraldPrimary,
                             modifier = Modifier.size(36.dp)
                         )
                     }
@@ -123,7 +126,7 @@ fun OnboardingScreen(
                         text = "Quick Setup",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
                         text = "Choose your currency and starting balance",
@@ -134,14 +137,15 @@ fun OnboardingScreen(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     // Currency Selector
-                    Text("Primary Currency:", style = MaterialTheme.typography.labelSmall)
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Primary Currency:", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(6.dp))
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         val currencies = listOf("₹", "$", "€", "£", "د.إ", "৳")
                         items(currencies) { c ->
                             FilterChip(
                                 selected = selectedCurrency == c,
                                 onClick = { selectedCurrency = c },
+                                shape = RoundedCornerShape(12.dp),
                                 label = { Text(c) }
                             )
                         }
@@ -154,6 +158,7 @@ fun OnboardingScreen(
                         onValueChange = { initialAccountName = it },
                         label = { Text("Primary Account Name") },
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("onboard_account_name")
                     )
 
@@ -165,6 +170,7 @@ fun OnboardingScreen(
                         label = { Text("Opening Balance ($selectedCurrency)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().testTag("onboard_balance_input")
                     )
                 }
@@ -184,10 +190,10 @@ fun OnboardingScreen(
                 for (i in 0..2) {
                     Box(
                         modifier = Modifier
-                            .size(if (i == step) 10.dp else 8.dp)
+                            .size(if (i == step) 12.dp else 8.dp)
                             .clip(CircleShape)
                             .background(
-                                if (i == step) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                                if (i == step) EmeraldPrimary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                             )
                     )
                 }
@@ -211,7 +217,8 @@ fun OnboardingScreen(
                     .fillMaxWidth()
                     .height(52.dp)
                     .testTag("onboarding_next_btn"),
-                shape = RoundedCornerShape(16.dp)
+                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                shape = RoundedCornerShape(14.dp)
             ) {
                 Text(
                     text = if (step < 2) "Continue" else "Start My Hisab",
@@ -238,14 +245,14 @@ private fun OnboardingStepPage(
         Box(
             modifier = Modifier
                 .size(96.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .clip(RoundedCornerShape(24.dp))
+                .background(MintSuccessContainer),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = EmeraldPrimary,
                 modifier = Modifier.size(48.dp)
             )
         }
@@ -256,7 +263,7 @@ private fun OnboardingStepPage(
             text = title,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center
         )
 
