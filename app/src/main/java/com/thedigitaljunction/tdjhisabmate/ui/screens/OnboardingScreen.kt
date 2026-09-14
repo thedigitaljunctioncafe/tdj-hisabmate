@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.thedigitaljunction.tdjhisabmate.ui.components.TDJHisabMateLogo
 import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
 import com.thedigitaljunction.tdjhisabmate.ui.util.MoneyUtils
@@ -91,7 +92,13 @@ fun OnboardingScreen(
         // Center Content Carousel
         when (step) {
             0 -> OnboardingStepPage(
-                icon = Icons.Default.Lock,
+                customLogo = {
+                    TDJHisabMateLogo(
+                        size = 96.dp,
+                        badgeShape = RoundedCornerShape(24.dp),
+                        showBadgeBackground = true
+                    )
+                },
                 title = "100% Free & Local-First",
                 subtitle = "TDJ HisabMate guarantees ₹0 cost forever. Your financial records never leave your phone—no accounts, no cloud sync, complete privacy."
             )
@@ -234,27 +241,32 @@ fun OnboardingScreen(
 
 @Composable
 private fun OnboardingStepPage(
-    icon: ImageVector,
     title: String,
-    subtitle: String
+    subtitle: String,
+    icon: ImageVector? = null,
+    customLogo: (@Composable () -> Unit)? = null
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Box(
-            modifier = Modifier
-                .size(96.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(MintSuccessContainer),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = EmeraldPrimary,
-                modifier = Modifier.size(48.dp)
-            )
+        if (customLogo != null) {
+            customLogo()
+        } else if (icon != null) {
+            Box(
+                modifier = Modifier
+                    .size(96.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MintSuccessContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = EmeraldPrimary,
+                    modifier = Modifier.size(48.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))

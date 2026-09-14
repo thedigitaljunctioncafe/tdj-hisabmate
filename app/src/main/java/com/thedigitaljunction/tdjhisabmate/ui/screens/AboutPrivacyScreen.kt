@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.thedigitaljunction.tdjhisabmate.ui.components.TDJHisabMateLogo
 import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccess
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
@@ -86,20 +87,12 @@ fun AboutPrivacyScreen(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(EmeraldPrimary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
+                    // TDJ Official Brand Logo
+                    TDJHisabMateLogo(
+                        size = 64.dp,
+                        badgeShape = RoundedCornerShape(18.dp),
+                        showBadgeBackground = true
+                    )
 
                     Spacer(modifier = Modifier.height(12.dp))
 

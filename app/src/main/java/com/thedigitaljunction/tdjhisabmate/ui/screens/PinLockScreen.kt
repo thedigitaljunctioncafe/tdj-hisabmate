@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.thedigitaljunction.tdjhisabmate.ui.components.TDJHisabMateLogo
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
 import com.thedigitaljunction.tdjhisabmate.ui.theme.EmeraldPrimary
 import com.thedigitaljunction.tdjhisabmate.ui.theme.MintSuccessContainer
@@ -65,20 +66,11 @@ fun PinLockScreen(
         verticalArrangement = Arrangement.SpaceAround
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(MintSuccessContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = EmeraldPrimary,
-                    modifier = Modifier.size(36.dp)
-                )
-            }
+            TDJHisabMateLogo(
+                size = 72.dp,
+                badgeShape = RoundedCornerShape(20.dp),
+                showBadgeBackground = true
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 

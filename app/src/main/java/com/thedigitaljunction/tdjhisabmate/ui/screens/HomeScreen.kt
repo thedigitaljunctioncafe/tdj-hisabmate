@@ -80,6 +80,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionEntity
 import com.thedigitaljunction.tdjhisabmate.data.model.TransactionType
+import com.thedigitaljunction.tdjhisabmate.ui.components.TDJHisabMateLogo
 import com.thedigitaljunction.tdjhisabmate.ui.theme.AmberAccent
 import com.thedigitaljunction.tdjhisabmate.ui.theme.AmberContainer
 import com.thedigitaljunction.tdjhisabmate.ui.theme.CoralExpense
@@ -165,25 +166,11 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    // TDJ Logo Badge
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(EmeraldHero, EmeraldPrimary)
-                                )
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.TrendingUp,
-                            contentDescription = "TDJ Logo",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                    // TDJ Official Brand Logo
+                    TDJHisabMateLogo(
+                        size = 44.dp,
+                        showBadgeBackground = true
+                    )
 
                     Spacer(modifier = Modifier.width(12.dp))
 
