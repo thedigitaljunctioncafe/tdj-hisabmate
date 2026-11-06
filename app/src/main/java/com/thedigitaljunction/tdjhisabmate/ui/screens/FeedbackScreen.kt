@@ -3,6 +3,7 @@ package com.thedigitaljunction.tdjhisabmate.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.core.net.toUri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,7 +66,7 @@ private fun openEmailComposer(
     val encodedSubject = Uri.encode(subject)
     val encodedBody = Uri.encode(body)
     val uriString = "mailto:$DEVELOPER_EMAIL?subject=$encodedSubject&body=$encodedBody"
-    val mailUri = Uri.parse(uriString)
+    val mailUri = uriString.toUri()
 
     val intent = Intent(Intent.ACTION_SENDTO, mailUri).apply {
         putExtra(Intent.EXTRA_EMAIL, arrayOf(DEVELOPER_EMAIL))
